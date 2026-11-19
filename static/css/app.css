@@ -1,0 +1,221 @@
+/* Role C — customer pages.
+   Plain, readable styling that stays usable down to 360px wide. */
+
+:root {
+    --ink: #1f2a37;
+    --muted: #5c6b7a;
+    --line: #d6dde5;
+    --surface: #ffffff;
+    --accent: #1f5f8b;
+    --ok: #1d6f42;
+    --warn: #8a5a00;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0 1rem 3rem;
+    background: #f4f6f8;
+    color: var(--ink);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+main {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 1.5rem 0;
+}
+
+nav[aria-label="Main navigation"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    align-items: center;
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--line);
+}
+
+nav[aria-label="Main navigation"] form {
+    margin: 0;
+    margin-left: auto;
+}
+
+.subnav {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.subnav a {
+    padding: .35rem .75rem;
+    border: 1px solid var(--line);
+    border-radius: .4rem;
+    background: var(--surface);
+    text-decoration: none;
+}
+
+a {
+    color: var(--accent);
+}
+
+h1 {
+    font-size: 1.6rem;
+    margin: 0 0 .5rem;
+}
+
+h2 {
+    font-size: 1.15rem;
+    margin: 2rem 0 .5rem;
+}
+
+.muted {
+    color: var(--muted);
+    font-size: .92rem;
+}
+
+.price {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Tables collapse into stacked blocks on narrow screens. */
+.grid {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+    overflow: hidden;
+}
+
+.grid th,
+.grid td {
+    padding: .7rem .8rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--line);
+}
+
+.grid thead th {
+    background: #e9eef3;
+    font-size: .85rem;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.grid tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.button {
+    display: inline-block;
+    padding: .3rem .7rem;
+    border: 1px solid var(--accent);
+    border-radius: .35rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.facts {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: .3rem 1.2rem;
+    margin: 1.2rem 0;
+}
+
+.facts dt {
+    color: var(--muted);
+}
+
+.facts dd {
+    margin: 0;
+}
+
+.people {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.status {
+    display: inline-block;
+    padding: .1rem .5rem;
+    border-radius: 999px;
+    font-size: .82rem;
+    background: #e9eef3;
+    color: var(--muted);
+}
+
+.status-confirmed {
+    background: #e3f2e9;
+    color: var(--ok);
+}
+
+.status-no_show {
+    background: #fdf0db;
+    color: var(--warn);
+}
+
+.pending {
+    display: inline-block;
+    padding: .2rem .6rem;
+    border: 1px dashed var(--line);
+    border-radius: .35rem;
+    color: var(--muted);
+    font-size: .88rem;
+}
+
+.notice {
+    padding: .6rem .8rem;
+    border-left: 4px solid var(--ok);
+    background: #e3f2e9;
+}
+
+.empty {
+    padding: 1.2rem;
+    background: var(--surface);
+    border: 1px dashed var(--line);
+    border-radius: .5rem;
+    color: var(--muted);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 40rem) {
+    .grid thead {
+        display: none;
+    }
+
+    .grid,
+    .grid tbody,
+    .grid tr,
+    .grid td {
+        display: block;
+        width: 100%;
+    }
+
+    .grid tr {
+        padding: .6rem 0;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .grid td {
+        border: 0;
+        padding: .2rem .8rem;
+    }
+}

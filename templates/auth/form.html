@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | Hair Salon{% endblock %}
+{% block content %}
+    <h1>{{ title }}</h1>
+    <form method="post">
+        {{ form.hidden_tag() }}
+        {% for field in form if field.type != "CSRFTokenField" %}
+            <p>
+                {{ field.label }}<br>
+                {% if field.name == 'password' %}
+                    {{ field(autocomplete='current-password' if is_login else 'new-password') }}
+                {% elif field.name == 'email' %}
+                    {{ field(autocomplete='email') }}
+                {% else %}
+                    {{ field(autocomplete='name') }}
+                {% endif %}
+            </p>
+            {% if field.errors %}
+                <ul>
+                    {% for error in field.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endfor %}
+        <button type="submit">{{ title }}</button>
+    </form>
+{% endblock %}

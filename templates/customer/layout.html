@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{#
+  Shared frame for the customer pages.
+
+  Two things here are a handoff to Role B, who owns templates/base.html:
+    1. the stylesheet link has to live in <head>; it is placed here only
+       because C must not edit base.html
+    2. the main navigation still has no customer links; a local sub-navigation
+       stands in until B adds them
+#}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+
+<nav class="subnav" aria-label="Customer navigation">
+    <a href="{{ url_for('customer.service_list') }}">Services</a>
+    <a href="{{ url_for('customer.my_appointments') }}">My appointments</a>
+</nav>
+
+{% block customer_content %}{% endblock %}
+{% endblock %}

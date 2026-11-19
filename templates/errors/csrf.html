@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Request expired | Hair Salon{% endblock %}
+{% block content %}
+    <h1>Please review your form</h1>
+    <p>The security token is missing, invalid, or expired. Return to the form, review your entries, and try again.</p>
+    <p>For your security, passwords must be entered again. No booking or account change was saved by this request.</p>
+    <p><a href="{{ url_for('index') }}">Return to the home page</a></p>
+{% endblock %}

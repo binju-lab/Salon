@@ -1,0 +1,37 @@
+{% extends "customer/layout.html" %}
+{% block title %}{{ service.name }} · Hair Salon{% endblock %}
+
+{% block customer_content %}
+<p><a href="{{ url_for('customer.service_list') }}">&larr; All services</a></p>
+
+<h1>{{ service.name }}</h1>
+<p class="muted">{{ service.description }}</p>
+
+<dl class="facts">
+    <dt>Duration</dt>
+    <dd data-duration="{{ service.duration_minutes }}">{{ service.duration_minutes }} minutes</dd>
+
+    <dt>Price</dt>
+    <dd class="price" data-price="{{ service.price }}">{{ service.price }}</dd>
+
+    <dt>Requires</dt>
+    <dd>{{ 'A colouring station' if service.required_workstation_type == 'colour' else 'A standard chair' }}</dd>
+</dl>
+
+<h2>Stylists for this service</h2>
+{% if stylists %}
+<ul class="people" data-stylist-count="{{ stylists|length }}">
+    {% for stylist in stylists %}
+    <li data-stylist-id="{{ stylist.id }}">{{ stylist.name }}</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="empty">No stylist is currently available for this service.</p>
+{% endif %}
+
+{#
+  C-3 will add a "Choose a time" link to /book here.  It is left out for now
+  because /book does not exist until Role A exposes the availability function,
+  and url_for() on a missing endpoint raises at render time.
+#}
+{% endblock %}

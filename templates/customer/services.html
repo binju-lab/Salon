@@ -1,0 +1,35 @@
+{% extends "customer/layout.html" %}
+{% block title %}Services · Hair Salon{% endblock %}
+
+{% block customer_content %}
+<h1>Services</h1>
+<p class="muted">Choose a service to see its price, how long it takes and which stylists can perform it.</p>
+
+{% if services %}
+<table class="grid" data-service-count="{{ services|length }}">
+    <thead>
+        <tr>
+            <th scope="col">Service</th>
+            <th scope="col">Duration</th>
+            <th scope="col">Price</th>
+            <th scope="col"><span class="sr-only">Details</span></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for service in services %}
+        <tr data-service-id="{{ service.id }}">
+            <td>
+                <a href="{{ url_for('customer.service_detail', service_id=service.id) }}">{{ service.name }}</a>
+                <div class="muted">{{ service.description }}</div>
+            </td>
+            <td>{{ service.duration_minutes }} min</td>
+            <td class="price">{{ service.price }}</td>
+            <td><a class="button" href="{{ url_for('customer.service_detail', service_id=service.id) }}">View</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="empty">No services are available at the moment.</p>
+{% endif %}
+{% endblock %}

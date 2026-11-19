@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Hair Salon Appointment Booking</h1>
+    {% if current_user.is_authenticated %}
+        <p>Signed in as {{ current_user.name }} ({{ current_user.role }}).</p>
+    {% else %}
+        <p>Sign in with a demonstration account or create a customer account.</p>
+    {% endif %}
+{% endblock %}

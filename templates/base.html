@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}Hair Salon{% endblock %}</title>
+</head>
+<body>
+    <nav aria-label="Main navigation">
+        <a href="{{ url_for('index') }}">Hair Salon</a>
+        {% if current_user.is_authenticated %}
+            {% if current_user.role == 'admin' %}
+                <a href="{{ url_for('auth.create_staff') }}">Create stylist account</a>
+            {% endif %}
+            <form method="post" action="{{ url_for('auth.logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit">Sign out</button>
+            </form>
+        {% else %}
+            <a href="{{ url_for('auth.login') }}">Sign in</a>
+            <a href="{{ url_for('auth.register') }}">Create customer account</a>
+        {% endif %}
+    </nav>
+    <main>
+        {% for message in get_flashed_messages() %}
+            <p role="status">{{ message }}</p>
+        {% endfor %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
