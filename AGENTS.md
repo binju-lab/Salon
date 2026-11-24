@@ -34,7 +34,7 @@ Add a `.gitattributes` containing `* text=auto eol=lf` before a macOS contributo
 .\.venv\Scripts\python.exe -m flask --app app run
 ```
 
-`seed` fills an empty database only; rerunning is a no-op. It prints the demo password once and never stores it elsewhere. Delete `instance/salon.sqlite3` to start from scratch.
+`seed` fills an empty database only; rerunning is a no-op. All seeded accounts share the fixed default local demo password `SalonDemo123!` (override with `SEED_PASSWORD`, 8–128 non-blank characters, before running `seed`). Delete `instance/salon.sqlite3` to start from scratch.
 
 ## Test
 
@@ -42,7 +42,7 @@ Add a `.gitattributes` containing `* text=auto eol=lf` before a macOS contributo
 .\.venv\Scripts\python.exe -m unittest discover -s tests
 ```
 
-Expect `Ran 37 tests ... OK`. Twenty-two belong to the shared baseline, fifteen to the customer pages. Any other number means the baseline is broken; repair it before adding features.
+Expect `Ran 39 tests ... OK`. Twenty-four belong to the shared baseline, fifteen to the customer pages. Any other number means the baseline is broken; repair it before adding features.
 
 ## File ownership
 

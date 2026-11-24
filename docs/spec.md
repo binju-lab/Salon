@@ -97,7 +97,7 @@ templates/errors/csrf.html
 templates/errors/error.html
 tests/test_auth.py           9 例
 tests/test_booking_rules.py  6 例（T3/T4/T6/T7 的约束行为）
-tests/test_contracts.py      6 例
+tests/test_contracts.py      9 例
 requirements.txt             Flask, Flask-Login, Flask-SQLAlchemy, Flask-WTF, SQLAlchemy, WTForms, email-validator
 ```
 
@@ -847,6 +847,8 @@ db.CheckConstraint("reason IN ('break','leave')", name="ck_unavailability_reason
 ### 12.4 数据库初始化
 
 本项目**不使用迁移工具**。`seed.py` 使用 `db.metadata.create_all()`。
+
+演示账号（`admin@example.com`、`stylist1@example.com`、`stylist2@example.com`、`customer1@example.com`、`customer2@example.com`）共用固定默认本地演示密码 `SalonDemo123!`（入库仍只存 `werkzeug` 哈希，且任意响应不含明文或哈希）；如需自定义，可在运行 `seed` 前设置环境变量 `SEED_PASSWORD`（8–128 位非空白字符）。已有非空库需改用新演示密码时，按下方命令删除 `instance\salon.sqlite3` 后重跑 `seed`。
 
 schema 变更后，全组统一执行：
 

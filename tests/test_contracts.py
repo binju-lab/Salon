@@ -2,7 +2,10 @@
 
 from datetime import datetime, timedelta
 from decimal import Decimal
+from html.parser import HTMLParser
+import os
 import unittest
+from unittest import mock
 
 from sqlalchemy import inspect, select
 from sqlalchemy.exc import IntegrityError
@@ -20,6 +23,7 @@ from models import (
     db,
 )
 from money import MAX_PRICE_MINOR, PriceValidationError, price_from_minor, price_to_minor
+from seed import DEFAULT_DEMO_PASSWORD
 
 
 class MoneyContractTests(unittest.TestCase):
@@ -197,43 +201,148 @@ class DatabaseContractTestCase(unittest.TestCase):
         db.session.commit()
 
 
+class _CsrfTokenParser(HTMLParser):
+    token = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "input":
+            fields = dict(attrs)
+            if fields.get("name") == "csrf_token":
+                self.token = fields.get("value")
+
+
 class SeedPreservationTests(unittest.TestCase):
-    def test_seed_rerun_preserves_passwords_appointments_and_all_related_rows(self):
-        app = create_app({
+    def _make_isolated_app(self, secret_key):
+        return create_app({
             "TESTING": True,
-            "SECRET_KEY": "isolated-seed-preservation-test",
+            "SECRET_KEY": secret_key,
             "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
         })
-        runner = app.test_cli_runner()
-        first = runner.invoke(args=["seed"])
-        self.assertEqual(first.exit_code, 0, first.output)
-        models = (
-            User, Service, StaffService, Workstation, WorkingShift,
-            Unavailability, Appointment, SlotAllocation,
-        )
 
-        def snapshot():
-            db.session.remove()
-            result = {}
-            for model in models:
-                primary_key = list(model.__table__.primary_key.columns)
-                rows = db.session.scalars(select(model).order_by(*primary_key)).all()
-                result[model.__tablename__] = [
-                    tuple(getattr(row, column.name) for column in model.__table__.columns)
-                    for row in rows
-                ]
-            return result
-
+    def _dispose_app(self, app):
         with app.app_context():
-            before = snapshot()
-            self.assertTrue(before["user"])
-            self.assertTrue(before["appointment"])
-            self.assertTrue(before["slot_allocation"])
-        second = runner.invoke(args=["seed"])
-        self.assertEqual(second.exit_code, 0, second.output)
-        self.assertIn("Seed skipped", second.output)
-        with app.app_context():
-            self.assertEqual(snapshot(), before)
-            self.assertTrue(all(row[3] for row in before["user"]))
             db.session.remove()
             db.engine.dispose()
+
+    def _login_as(self, app, email, password):
+        client = app.test_client()
+        page = client.get("/auth/login")
+        self.assertEqual(page.status_code, 200)
+        parser = _CsrfTokenParser()
+        parser.feed(page.get_data(as_text=True))
+        self.assertTrue(parser.token, "Missing CSRF token on /auth/login")
+        response = client.post(
+            "/auth/login",
+            data={"csrf_token": parser.token, "email": email, "password": password},
+        )
+        return client, response
+
+    def test_seed_rerun_preserves_passwords_appointments_and_all_related_rows(self):
+        app = self._make_isolated_app("isolated-seed-preservation-test")
+        try:
+            runner = app.test_cli_runner()
+            with mock.patch.dict(os.environ, {"SEED_PASSWORD": ""}, clear=False):
+                first = runner.invoke(args=["seed"])
+            self.assertEqual(first.exit_code, 0, first.output)
+            models = (
+                User, Service, StaffService, Workstation, WorkingShift,
+                Unavailability, Appointment, SlotAllocation,
+            )
+
+            def snapshot():
+                db.session.remove()
+                result = {}
+                for model in models:
+                    primary_key = list(model.__table__.primary_key.columns)
+                    rows = db.session.scalars(select(model).order_by(*primary_key)).all()
+                    result[model.__tablename__] = [
+                        tuple(getattr(row, column.name) for column in model.__table__.columns)
+                        for row in rows
+                    ]
+                return result
+
+            with app.app_context():
+                before = snapshot()
+                self.assertTrue(before["user"])
+                self.assertTrue(before["appointment"])
+                self.assertTrue(before["slot_allocation"])
+            with mock.patch.dict(os.environ, {"SEED_PASSWORD": "DifferentPass99!"}, clear=False):
+                second = runner.invoke(args=["seed"])
+            self.assertEqual(second.exit_code, 0, second.output)
+            self.assertIn("Seed skipped", second.output)
+            with app.app_context():
+                self.assertEqual(snapshot(), before)
+                self.assertTrue(all(row[3] for row in before["user"]))
+        finally:
+            self._dispose_app(app)
+
+    def test_seed_uses_fixed_default_password_and_allows_real_login(self):
+        for env_override in (None, ""):
+            with self.subTest(seed_password=env_override):
+                app = self._make_isolated_app("isolated-seed-default-password-test")
+                try:
+                    runner = app.test_cli_runner()
+                    patched_env = dict(os.environ)
+                    if env_override is None:
+                        patched_env.pop("SEED_PASSWORD", None)
+                    else:
+                        patched_env["SEED_PASSWORD"] = env_override
+                    with mock.patch.dict(os.environ, patched_env, clear=True):
+                        result = runner.invoke(args=["seed"])
+                    self.assertEqual(result.exit_code, 0, result.output)
+                    self.assertIn(f"Demo password: {DEFAULT_DEMO_PASSWORD}", result.output)
+
+                    with app.app_context():
+                        users = db.session.scalars(select(User).order_by(User.id)).all()
+                        self.assertEqual(len(users), 5)
+                        for user in users:
+                            self.assertNotEqual(user.password_hash, DEFAULT_DEMO_PASSWORD)
+                            self.assertTrue(user.check_password(DEFAULT_DEMO_PASSWORD))
+
+                    client, response = self._login_as(app, "admin@example.com", DEFAULT_DEMO_PASSWORD)
+                    self.assertEqual(response.status_code, 302)
+                    self.assertEqual(response.headers["Location"], "/")
+                    home = client.get("/")
+                    self.assertEqual(home.status_code, 200)
+                    self.assertIn("Signed in as Demo Admin (admin).", home.get_data(as_text=True))
+                finally:
+                    self._dispose_app(app)
+
+    def test_seed_supports_seed_password_env_override_and_rejects_invalid_values(self):
+        custom_password = "TeamCustomPass!99"
+        app = self._make_isolated_app("isolated-seed-custom-password-test")
+        try:
+            runner = app.test_cli_runner()
+            with mock.patch.dict(os.environ, {"SEED_PASSWORD": custom_password}, clear=False):
+                result = runner.invoke(args=["seed"])
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertIn(f"Demo password: {custom_password}", result.output)
+
+            with app.app_context():
+                users = db.session.scalars(select(User).order_by(User.id)).all()
+                self.assertEqual(len(users), 5)
+                for user in users:
+                    self.assertNotEqual(user.password_hash, custom_password)
+                    self.assertTrue(user.check_password(custom_password))
+                    self.assertFalse(user.check_password(DEFAULT_DEMO_PASSWORD))
+
+            client, response = self._login_as(app, "customer1@example.com", custom_password)
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.headers["Location"], "/")
+            self.assertIn("Signed in as Demo Customer 1 (customer).", client.get("/").get_data(as_text=True))
+        finally:
+            self._dispose_app(app)
+
+        for bad_value in ("short7!", "        ", "a" * 129):
+            with self.subTest(bad_value=repr(bad_value)):
+                bad_app = self._make_isolated_app("isolated-seed-bad-password-test")
+                try:
+                    bad_runner = bad_app.test_cli_runner()
+                    with mock.patch.dict(os.environ, {"SEED_PASSWORD": bad_value}, clear=False):
+                        bad_result = bad_runner.invoke(args=["seed"])
+                    self.assertNotEqual(bad_result.exit_code, 0)
+                    self.assertIn("SEED_PASSWORD", bad_result.output)
+                    with bad_app.app_context():
+                        self.assertEqual(inspect(db.engine).get_table_names(), [])
+                finally:
+                    self._dispose_app(bad_app)

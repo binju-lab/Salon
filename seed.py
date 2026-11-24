@@ -1,4 +1,4 @@
-import secrets
+import os
 from datetime import date, datetime, time, timedelta
 
 import click
@@ -15,11 +15,30 @@ from models import (
     db,
 )
 
+DEFAULT_DEMO_PASSWORD = "SalonDemo123!"
+MIN_PASSWORD_LENGTH = 8
+MAX_PASSWORD_LENGTH = 128
+
+
+def resolve_demo_password():
+    """Return SEED_PASSWORD when set, otherwise the shared local demo default."""
+    env_password = os.environ.get("SEED_PASSWORD")
+    if env_password is None or env_password == "":
+        return DEFAULT_DEMO_PASSWORD
+    if not env_password.strip() or not (
+        MIN_PASSWORD_LENGTH <= len(env_password) <= MAX_PASSWORD_LENGTH
+    ):
+        raise click.ClickException(
+            f"SEED_PASSWORD must be {MIN_PASSWORD_LENGTH}-{MAX_PASSWORD_LENGTH} non-blank characters."
+        )
+    return env_password
+
 
 def register_seed_command(app):
     @app.cli.command("seed")
     def seed_command():
         """Create and populate an empty local demonstration database."""
+        password = resolve_demo_password()
         tables = (
             User,
             Service,
@@ -38,14 +57,13 @@ def register_seed_command(app):
             if any(db.session.scalar(db.select(model).limit(1)) for model in tables):
                 click.echo("Database already contains data. Seed skipped.")
                 return
-            password = secrets.token_urlsafe(16)
             users = add_demo_data(password, date.today() + timedelta(days=1))
             accounts = [(user.email, user.role) for user in users]
 
         click.echo("Local demonstration accounts created:")
         for email, role in accounts:
             click.echo(f"  {email} ({role})")
-        click.echo(f"Demo password (shown once): {password}")
+        click.echo(f"Demo password: {password}")
 
 
 def add_demo_data(password, work_date):

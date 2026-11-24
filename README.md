@@ -20,14 +20,14 @@ python -m venv .venv
 
 ### 2. 初始化演示数据库并打开应用
 
-在接调度和页面之前，先验证空数据库能建表并生成一套关系完整的演示数据。种子命令只给空数据库导入数据，因此日常重跑会保留已有的账号和预约。第一次成功导入时，记下终端显示的本地演示密码，再启动应用。
+在接调度和页面之前，先验证空数据库能建表并生成一套关系完整的演示数据。种子命令只给空数据库导入数据，因此日常重跑会保留已有的账号和预约。所有演示账号默认共用固定本地演示密码 `SalonDemo123!`（如需自定义，可在运行 `seed` 前设置 8–128 位非空白环境变量 `SEED_PASSWORD`；如果本地已有旧数据库，需先删除 `instance\salon.sqlite3` 再重跑 `seed`）。
 
 ```powershell
 .\.venv\Scripts\python.exe -m flask --app app seed
 .\.venv\Scripts\python.exe -m flask --app app run
 ```
 
-在浏览器打开 `http://127.0.0.1:5000/`。确认首页可打开、`instance/salon.sqlite3` 已生成，并能用种子账号登录。`admin@example.com` 是管理员，`stylist1@example.com` 和 `stylist2@example.com` 是发型师，`customer1@example.com` 和 `customer2@example.com` 是顾客。它们共用首次导入时输出的演示密码。
+在浏览器打开 `http://127.0.0.1:5000/`。确认首页可打开、`instance/salon.sqlite3` 已生成，并能用种子账号登录。`admin@example.com` 是管理员，`stylist1@example.com` 和 `stylist2@example.com` 是发型师，`customer1@example.com` 和 `customer2@example.com` 是顾客。它们共用本地演示密码（默认 `SalonDemo123!`，或导入前通过 `SEED_PASSWORD` 指定的密码）。
 
 如需在重启应用后保留浏览器会话，在启动前通过 PowerShell 的 `SECRET_KEY` 环境变量提供你自己生成的随机密钥。应用使用它签名会话与 CSRF 令牌。环境变量缺省时，应用在每次启动时生成临时密钥，重启后要重新登录。
 
