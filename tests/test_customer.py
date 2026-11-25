@@ -3,9 +3,8 @@
 Every test drives a real Flask request through the app, because the contract
 only accepts real HTTP evidence (spec section 0.5).
 
-The customer blueprint is registered inside this test module.  ``app.py`` is
-owned by Role B, so C never edits it; B switches the blueprint on when the
-modules are integrated.
+``app.py`` registers the customer blueprint, so the tests run against the wired
+application instead of adding the blueprint themselves.
 """
 
 import re
@@ -13,7 +12,6 @@ import unittest
 from datetime import datetime, timedelta
 
 from app import create_app
-from customer import customer
 from models import Appointment, Service, StaffService, User, Workstation, db
 
 PASSWORD = "Passw0rd!"
@@ -28,7 +26,6 @@ class CustomerPagesTest(unittest.TestCase):
                 "WTF_CSRF_ENABLED": False,
             }
         )
-        self.app.register_blueprint(customer)
         self.ctx = self.app.app_context()
         self.ctx.push()
         db.create_all()

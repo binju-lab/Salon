@@ -7,7 +7,8 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 
 from auth import auth
-# from customer import customer  # C 交付
+from availability import slots_api  # A 交付：/api/slots
+from customer import customer  # C 交付
 # from staff import staff  # D 交付
 # from admin import admin  # D 交付
 from models import User, db
@@ -46,7 +47,8 @@ def create_app(test_config=None):
     csrf.init_app(app)
     register_login_response_handler(login_manager)
     app.register_blueprint(auth)
-    # app.register_blueprint(customer)
+    app.register_blueprint(slots_api)
+    app.register_blueprint(customer)
     # app.register_blueprint(staff)
     # app.register_blueprint(admin)
     register_error_handlers(app)

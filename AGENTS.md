@@ -42,7 +42,7 @@ Add a `.gitattributes` containing `* text=auto eol=lf` before a macOS contributo
 .\.venv\Scripts\python.exe -m unittest discover -s tests
 ```
 
-Expect `Ran 39 tests ... OK`. Twenty-four belong to the shared baseline, fifteen to the customer pages. Any other number means the baseline is broken; repair it before adding features.
+Expect `Ran 101 tests ... OK`. Breakdown: `test_auth.py` 9, `test_contracts.py` 9, `test_booking_rules.py` 68, `test_customer.py` 15. Any other number means the baseline is broken; repair it before adding features.
 
 ## File ownership
 
@@ -53,10 +53,12 @@ Expect `Ran 39 tests ... OK`. Twenty-four belong to the shared baseline, fifteen
 | C | `customer.py`, `templates/customer/*`, `static/*`, `tests/test_customer.py` |
 | D | `staff.py`, `admin.py`, `templates/staff/*`, `templates/admin/*`, `tests/test_staff_admin.py` |
 
-Only B edits `app.py`. A, C and D deliver a blueprint object and tell B its name; B uncomments the matching import and `register_blueprint` line.
+Only B edits `app.py`. A, C and D deliver a blueprint object and tell B its name; B adds the import and the `register_blueprint` line.
+
+Blueprints currently wired: `auth`, `slots_api` (from `availability.py`), `customer`. The `staff` and `admin` slots are still commented out.
 
 ## Current gaps
 
-- `app.py` registers `auth` only. The `customer`, `staff` and `admin` imports and registrations are commented out. Uncomment one only after its module exists.
+- `/book` and the three write routes (`POST /book`, `/cancel`, `/reschedule`) are not implemented. `booking.py` already exports `create_appointment`, `reschedule` and `cancel`; the customer blueprint only needs to call them and map `SlotTaken`, `InvalidState`, `ValidationFailed` and `DateOutOfRange` to the contract status codes.
 - `templates/base.html` has no stylesheet link and no customer navigation. Customer pages therefore carry a local sub-nav and a body-level `<link rel="stylesheet">` in `templates/customer/layout.html`. Move both into `base.html` when B next edits it.
-- `availability.py` and `booking.py` do not exist yet, so `/book` and the three write routes are missing. The customer pages currently stop at the catalogue and the personal list.
+- `staff.py` and `admin.py` do not exist. Every `/staff/*` and `/admin/*` route is missing.
