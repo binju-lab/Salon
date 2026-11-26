@@ -2,33 +2,40 @@
 {% block title %}{{ service.name }} · Hair Salon{% endblock %}
 
 {% block customer_content %}
-<p><a href="{{ url_for('customer.service_list') }}">&larr; All services</a></p>
+<a class="back-link" href="{{ url_for('customer.service_list') }}">&larr; All services</a>
 
-<h1>{{ service.name }}</h1>
-<p class="muted">{{ service.description }}</p>
+<div class="page-head">
+    <p class="eyebrow">Treatment</p>
+    <h1>{{ service.name }}</h1>
+    <p class="lede">{{ service.description }}</p>
+</div>
 
-<dl class="facts">
-    <dt>Duration</dt>
-    <dd data-duration="{{ service.duration_minutes }}">{{ service.duration_minutes }} minutes</dd>
+<div class="card card--pad" style="max-width: 34rem;">
+    <dl class="facts">
+        <dt>Duration</dt>
+        <dd data-duration="{{ service.duration_minutes }}">{{ service.duration_minutes }} minutes</dd>
 
-    <dt>Price</dt>
-    <dd class="price" data-price="{{ service.price }}">{{ service.price }}</dd>
+        <dt>Price</dt>
+        <dd><span class="price price--lg" data-price="{{ service.price }}">{{ service.price }}</span></dd>
 
-    <dt>Requires</dt>
-    <dd>{{ 'A colouring station' if service.required_workstation_type == 'colour' else 'A standard chair' }}</dd>
-</dl>
+        <dt>Needs</dt>
+        <dd data-workstation-type="{{ service.required_workstation_type }}">
+            {{ 'A colouring station' if service.required_workstation_type == 'colour' else 'A standard chair' }}</dd>
+    </dl>
+</div>
 
-<h2>Stylists for this service</h2>
+<h2>Choose a stylist</h2>
 {% if stylists %}
-<ul class="people" data-stylist-count="{{ stylists|length }}">
+<ul class="stylist-list" data-stylist-count="{{ stylists|length }}">
     {% for stylist in stylists %}
-    <li data-stylist-id="{{ stylist.id }}">
-        {{ stylist.name }}
-        <a class="button" href="{{ url_for('customer.book', service_id=service.id, stylist_id=stylist.id) }}">Choose a time</a>
+    <li class="stylist-chip" data-stylist-id="{{ stylist.id }}">
+        <span>{{ stylist.name }}</span>
+        <a class="btn btn--primary btn--sm"
+           href="{{ url_for('customer.book', service_id=service.id, stylist_id=stylist.id) }}">Choose a time</a>
     </li>
     {% endfor %}
 </ul>
 {% else %}
-<p class="empty">No stylist is currently available for this service.</p>
+<div class="empty">No stylist is currently available for this service.</div>
 {% endif %}
 {% endblock %}

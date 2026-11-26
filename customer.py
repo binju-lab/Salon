@@ -41,6 +41,16 @@ def _format_time(value):
     return value.strftime("%H:%M") if value is not None else None
 
 
+def _date_label(value):
+    """Human label for a date: 'Thu 27 Nov 2026'."""
+    return value.strftime("%a %d %b %Y").replace(" 0", " ")
+
+
+def _time_label(starts_at, ends_at):
+    """Human label for an interval: '10:00 – 11:00'."""
+    return f"{starts_at:%H:%M} – {ends_at:%H:%M}"
+
+
 def _service_payload(service):
     return {
         "id": service.id,
@@ -86,6 +96,8 @@ def _appointment_payload(appointment, now):
         "workstation_label": appointment.workstation.label,
         "starts_at": _format_datetime(appointment.starts_at),
         "ends_at": _format_datetime(appointment.ends_at),
+        "date_label": _date_label(appointment.starts_at),
+        "time_label": _time_label(appointment.starts_at, appointment.ends_at),
         "price": price_from_minor(appointment.agreed_price_minor),
         "status": appointment.status,
         "arrived_at": _format_datetime(appointment.arrived_at),

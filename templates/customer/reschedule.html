@@ -2,50 +2,64 @@
 {% block title %}Change time · Hair Salon{% endblock %}
 
 {% block customer_content %}
-<p><a href="{{ url_for('customer.my_appointments') }}">&larr; My appointments</a></p>
+<a class="back-link" href="{{ url_for('customer.my_appointments') }}">&larr; My appointments</a>
 
-<h1>Change the time</h1>
-
-<dl class="facts">
-    <dt>Service</dt>
-    <dd>{{ appointment.service_name }}, until {{ appointment.ends_at[11:] }}</dd>
-
-    <dt>Stylist</dt>
-    <dd>{{ appointment.stylist_name }}</dd>
-
-    <dt>Currently</dt>
-    <dd>{{ appointment.starts_at }}</dd>
-
-    <dt>Price</dt>
-    <dd class="price">{{ appointment.price }}, unchanged by the move</dd>
-</dl>
+<div class="page-head">
+    <p class="eyebrow">Change time</p>
+    <h1>Move your appointment</h1>
+    <p class="lede">Your price and duration stay exactly as they were booked. The old slot is released only once the move succeeds.</p>
+</div>
 
 {% if error %}
-<p class="error" role="alert" data-booking-error>{{ error }}</p>
+<div class="alert alert--error" role="alert" data-booking-error>{{ error }}</div>
 {% endif %}
 
-<form method="post" action="{{ url_for('customer.reschedule_submit', appointment_id=appointment.id) }}"
-      id="booking-form" class="booking"
-      data-slots-url="/api/slots"
-      data-mode="reschedule"
-      data-appointment-id="{{ appointment.id }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="row" style="align-items: flex-start; gap: 2.5rem;">
+    <div class="card card--pad" style="flex: 1 1 20rem; max-width: 26rem;">
+        <dl class="facts">
+            <dt>Service</dt>
+            <dd>{{ appointment.service_name }}</dd>
 
-    <p>
-        <label for="booking-date">New date</label>
-        <input type="date" id="booking-date" name="date"
-               value="{{ form_date }}" min="{{ today }}" max="{{ last_bookable_day }}" required>
-    </p>
+            <dt>Stylist</dt>
+            <dd>{{ appointment.stylist_name }}</dd>
 
-    <fieldset class="slots-fieldset">
-        <legend>Available times</legend>
-        <p id="slot-status" class="muted" role="status">Loading times&hellip;</p>
-        <div id="slot-list" class="slots" aria-live="polite"></div>
-        <input type="hidden" id="booking-start" name="start" value="" required>
-    </fieldset>
+            <dt>Currently</dt>
+            <dd>
+                <span class="cell-stack">
+                    <span>{{ appointment.date_label }}</span>
+                    <small class="muted">{{ appointment.time_label }}</small>
+                </span>
+            </dd>
 
-    <button type="submit" id="booking-submit" class="button primary" disabled>Move appointment</button>
-</form>
+            <dt>Price</dt>
+            <dd><span class="price">{{ appointment.price }}</span></dd>
+        </dl>
+    </div>
+
+    <form method="post" action="{{ url_for('customer.reschedule_submit', appointment_id=appointment.id) }}"
+          id="booking-form" class="card card--pad stack"
+          style="flex: 1 1 26rem;"
+          data-slots-url="/api/slots"
+          data-mode="reschedule"
+          data-appointment-id="{{ appointment.id }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="field">
+            <label for="booking-date">New date</label>
+            <input type="date" id="booking-date" name="date"
+                   value="{{ form_date }}" min="{{ today }}" max="{{ last_bookable_day }}" required>
+        </div>
+
+        <div>
+            <span class="label">Available times</span>
+            <p id="slot-status" class="slot-note" role="status">Loading times&hellip;</p>
+            <div id="slot-list" class="slots" aria-live="polite"></div>
+            <input type="hidden" id="booking-start" name="start" value="" required>
+        </div>
+
+        <button type="submit" id="booking-submit" class="btn btn--primary" disabled>Move appointment</button>
+    </form>
+</div>
 {% endblock %}
 
 {% block customer_scripts %}

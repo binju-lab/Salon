@@ -2,49 +2,61 @@
 {% block title %}Book {{ service.name }} · Hair Salon{% endblock %}
 
 {% block customer_content %}
-<p><a href="{{ url_for('customer.service_detail', service_id=service.id) }}">&larr; {{ service.name }}</a></p>
+<a class="back-link" href="{{ url_for('customer.service_detail', service_id=service.id) }}">&larr; {{ service.name }}</a>
 
-<h1>Book a time</h1>
-
-<dl class="facts">
-    <dt>Service</dt>
-    <dd>{{ service.name }}, {{ service.duration_minutes }} minutes</dd>
-
-    <dt>Price</dt>
-    <dd class="price">{{ service.price }}</dd>
-
-    <dt>Stylist</dt>
-    <dd>{{ stylist.name }}</dd>
-</dl>
+<div class="page-head">
+    <p class="eyebrow">Book an appointment</p>
+    <h1>Pick a time</h1>
+    <p class="lede">Choose a day, then pick one of the free start times. Nothing is reserved until you confirm.</p>
+</div>
 
 {% if error %}
-<p class="error" role="alert" data-booking-error>{{ error }}</p>
+<div class="alert alert--error" role="alert" data-booking-error>{{ error }}</div>
 {% endif %}
 
-<form method="post" action="{{ url_for('customer.create_booking') }}" id="booking-form" class="booking"
-      data-slots-url="/api/slots"
-      data-mode="create"
-      data-service-id="{{ service.id }}"
-      data-stylist-id="{{ stylist.id }}">
-    <input type="hidden" name="service_id" value="{{ service.id }}">
-    <input type="hidden" name="stylist_id" value="{{ stylist.id }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="row" style="align-items: flex-start; gap: 2.5rem;">
+    <div class="card card--pad" style="flex: 1 1 20rem; max-width: 26rem;">
+        <dl class="facts">
+            <dt>Service</dt>
+            <dd>{{ service.name }}</dd>
 
-    <p>
-        <label for="booking-date">Date</label>
-        <input type="date" id="booking-date" name="date"
-               value="{{ form_date }}" min="{{ today }}" max="{{ last_bookable_day }}" required>
-    </p>
+            <dt>Duration</dt>
+            <dd>{{ service.duration_minutes }} minutes</dd>
 
-    <fieldset class="slots-fieldset">
-        <legend>Available times</legend>
-        <p id="slot-status" class="muted" role="status">Loading times&hellip;</p>
-        <div id="slot-list" class="slots" aria-live="polite"></div>
-        <input type="hidden" id="booking-start" name="start" value="" required>
-    </fieldset>
+            <dt>Price</dt>
+            <dd><span class="price">{{ service.price }}</span></dd>
 
-    <button type="submit" id="booking-submit" class="button primary" disabled>Confirm booking</button>
-</form>
+            <dt>Stylist</dt>
+            <dd>{{ stylist.name }}</dd>
+        </dl>
+    </div>
+
+    <form method="post" action="{{ url_for('customer.create_booking') }}" id="booking-form" class="card card--pad stack"
+          style="flex: 1 1 26rem;"
+          data-slots-url="/api/slots"
+          data-mode="create"
+          data-service-id="{{ service.id }}"
+          data-stylist-id="{{ stylist.id }}">
+        <input type="hidden" name="service_id" value="{{ service.id }}">
+        <input type="hidden" name="stylist_id" value="{{ stylist.id }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="field">
+            <label for="booking-date">Date</label>
+            <input type="date" id="booking-date" name="date"
+                   value="{{ form_date }}" min="{{ today }}" max="{{ last_bookable_day }}" required>
+        </div>
+
+        <div>
+            <span class="label">Available times</span>
+            <p id="slot-status" class="slot-note" role="status">Loading times&hellip;</p>
+            <div id="slot-list" class="slots" aria-live="polite"></div>
+            <input type="hidden" id="booking-start" name="start" value="" required>
+        </div>
+
+        <button type="submit" id="booking-submit" class="btn btn--primary" disabled>Confirm booking</button>
+    </form>
+</div>
 {% endblock %}
 
 {% block customer_scripts %}

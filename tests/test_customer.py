@@ -236,10 +236,12 @@ class CustomerPagesTest(unittest.TestCase):
     def test_timestamps_use_the_contract_format(self):
         self._login("alice@example.com")
         body = self.client.get("/my-appointments").get_data(as_text=True)
-        stamps = re.findall(r'class="when">([^<]+)<', body)
+        # The visible label is human-readable; the machine value stays ISO and
+        # lives in the <time datetime="..."> attribute.
+        stamps = re.findall(r'<time class="when" datetime="([^"]+)"', body)
         self.assertTrue(stamps)
         for stamp in stamps:
-            self.assertRegex(stamp.strip(), r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$")
+            self.assertRegex(stamp, r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$")
 
     def test_booked_parameter_highlights_the_new_booking(self):
         self._login("alice@example.com")
@@ -667,7 +669,7 @@ class CustomerPagesTest(unittest.TestCase):
     def test_service_list_reports_the_required_workstation_type(self):
         body = self.client.get("/services").get_data(as_text=True)
         self.assertIn('data-workstation-type="chair"', body)
-        self.assertIn("Chair", body)
+        self.assertIn("Standard chair", body)
 
     def test_my_appointments_expose_the_contract_ids(self):
         self._login("alice@example.com")

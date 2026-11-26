@@ -2,38 +2,32 @@
 {% block title %}Services · Hair Salon{% endblock %}
 
 {% block customer_content %}
-<h1>Services</h1>
-<p class="muted">Choose a service to see its price, how long it takes and which stylists can perform it.</p>
+<div class="page-head">
+    <p class="eyebrow">Our menu</p>
+    <h1>Services</h1>
+    <p class="lede">Pick a treatment to see how long it takes, what it costs and which stylists can perform it.</p>
+</div>
 
 {% if services %}
-<table class="grid" data-service-count="{{ services|length }}">
-    <thead>
-        <tr>
-            <th scope="col">Service</th>
-            <th scope="col">Duration</th>
-            <th scope="col">Price</th>
-            <th scope="col">Needs</th>
-            <th scope="col"><span class="sr-only">Details</span></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for service in services %}
-        <tr data-service-id="{{ service.id }}">
-            <td>
-                <a href="{{ url_for('customer.service_detail', service_id=service.id) }}">{{ service.name }}</a>
-                <div class="muted">{{ service.description }}</div>
-            </td>
-            <td>{{ service.duration_minutes }} min</td>
-            <td class="price">{{ service.price }}</td>
-            <td data-workstation-type="{{ service.required_workstation_type }}">
-                {{ 'Colouring station' if service.required_workstation_type == 'colour' else 'Chair' }}
-            </td>
-            <td><a class="button" href="{{ url_for('customer.service_detail', service_id=service.id) }}">View</a></td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<ul class="service-grid" data-service-count="{{ services|length }}">
+    {% for service in services %}
+    <li class="service-card" data-service-id="{{ service.id }}">
+        <div class="service-card__head">
+            <a class="service-card__name" href="{{ url_for('customer.service_detail', service_id=service.id) }}">{{ service.name }}</a>
+            <span class="price price--lg">{{ service.price }}</span>
+        </div>
+        <p class="service-card__desc">{{ service.description }}</p>
+        <div class="service-card__meta">
+            <span>{{ service.duration_minutes }} min</span>
+            <span class="dot-sep" data-workstation-type="{{ service.required_workstation_type }}">
+                {{ 'Colouring station' if service.required_workstation_type == 'colour' else 'Standard chair' }}</span>
+            <span class="spacer"></span>
+            <a class="btn btn--sm" href="{{ url_for('customer.service_detail', service_id=service.id) }}">View</a>
+        </div>
+    </li>
+    {% endfor %}
+</ul>
 {% else %}
-<p class="empty">No services are available at the moment.</p>
+<div class="empty">No services are available at the moment.</div>
 {% endif %}
 {% endblock %}

@@ -304,7 +304,12 @@ class SeedPreservationTests(unittest.TestCase):
                     self.assertEqual(response.headers["Location"], "/")
                     home = client.get("/")
                     self.assertEqual(home.status_code, 200)
-                    self.assertIn("Signed in as Demo Admin (admin).", home.get_data(as_text=True))
+                    # The greeting moved into the shared header during the UI
+                    # redesign, so assert the session plus the visible name
+                    # instead of the old one-line copy.
+                    self.assertIn("Demo Admin", home.get_data(as_text=True))
+                    with client.session_transaction() as session:
+                        self.assertIn("_user_id", session)
                 finally:
                     self._dispose_app(app)
 
@@ -329,7 +334,9 @@ class SeedPreservationTests(unittest.TestCase):
             client, response = self._login_as(app, "customer1@example.com", custom_password)
             self.assertEqual(response.status_code, 302)
             self.assertEqual(response.headers["Location"], "/")
-            self.assertIn("Signed in as Demo Customer 1 (customer).", client.get("/").get_data(as_text=True))
+            self.assertIn("Demo Customer 1", client.get("/").get_data(as_text=True))
+            with client.session_transaction() as session:
+                self.assertIn("_user_id", session)
         finally:
             self._dispose_app(app)
 

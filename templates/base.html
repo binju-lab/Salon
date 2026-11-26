@@ -4,33 +4,65 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#9a3412">
     <title>{% block title %}Hair Salon{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
-    <nav aria-label="Main navigation">
-        <a href="{{ url_for('index') }}">Hair Salon</a>
-        <a href="{{ url_for('customer.service_list') }}">Services</a>
-        {% if current_user.is_authenticated %}
-            {% if current_user.role == 'customer' %}
-                <a href="{{ url_for('customer.my_appointments') }}">My appointments</a>
-            {% elif current_user.role == 'admin' %}
-                <a href="{{ url_for('auth.create_staff') }}">Create stylist account</a>
+    {% set endpoint = request.endpoint or '' %}
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a class="brand" href="{{ url_for('index') }}">
+                <span class="brand__mark" aria-hidden="true">HS</span>
+                Hair Salon
+            </a>
+
+            <nav class="site-nav" aria-label="Main navigation">
+                <a href="{{ url_for('customer.service_list') }}"
+                   {% if endpoint.startswith('customer.service') %}aria-current="page"{% endif %}>Services</a>
+                {% if current_user.is_authenticated and current_user.role == 'customer' %}
+                    <a href="{{ url_for('customer.my_appointments') }}"
+                       {% if endpoint in ('customer.my_appointments', 'customer.reschedule_form') %}aria-current="page"{% endif %}>My appointments</a>
+                {% endif %}
+                {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                    <a href="{{ url_for('auth.create_staff') }}"
+                       {% if endpoint == 'auth.create_staff' %}aria-current="page"{% endif %}>Create stylist account</a>
+                {% endif %}
+            </nav>
+
+            {% if current_user.is_authenticated %}
+                <div class="site-user">
+                    <span class="site-user__name">
+                        <strong>{{ current_user.name }}</strong>
+                        <span>{{ current_user.role }}</span>
+                    </span>
+                    <form method="post" action="{{ url_for('auth.logout') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn--ghost btn--sm">Sign out</button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="site-nav__guest">
+                    <a class="btn btn--ghost btn--sm" href="{{ url_for('auth.login') }}">Sign in</a>
+                    <a class="btn btn--primary btn--sm" href="{{ url_for('auth.register') }}">Create account</a>
+                </div>
             {% endif %}
-            <form method="post" action="{{ url_for('auth.logout') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit">Sign out</button>
-            </form>
-        {% else %}
-            <a href="{{ url_for('auth.login') }}">Sign in</a>
-            <a href="{{ url_for('auth.register') }}">Create customer account</a>
-        {% endif %}
-    </nav>
-    <main>
+        </div>
+    </header>
+
+    <main class="container">
         {% for message in get_flashed_messages() %}
-            <p role="status">{{ message }}</p>
+            <div class="alert alert--info" role="status">{{ message }}</div>
         {% endfor %}
+
         {% block content %}{% endblock %}
     </main>
+
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <span>Hair Salon appointment booking</span>
+            <span>One shared schedule for customers, stylists and the administrator</span>
+        </div>
+    </footer>
 </body>
 </html>

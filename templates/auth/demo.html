@@ -1,9 +1,42 @@
 {% extends "base.html" %}
+{% block title %}Hair Salon · Appointment booking{% endblock %}
 {% block content %}
-    <h1>Hair Salon Appointment Booking</h1>
-    {% if current_user.is_authenticated %}
-        <p>Signed in as {{ current_user.name }} ({{ current_user.role }}).</p>
-    {% else %}
-        <p>Sign in with a demonstration account or create a customer account.</p>
-    {% endif %}
+<section class="hero">
+    <p class="eyebrow">Appointment booking</p>
+    <h1>One shared schedule for the whole salon</h1>
+    <p class="lede">
+        Customers book a time the salon can actually provide. Stylists see only their own day.
+        The administrator keeps services, chairs, shifts and leave in one place, so nobody has to
+        ring round to check who is free.
+    </p>
+
+    <div class="quick-links">
+        <a class="btn btn--primary" href="{{ url_for('customer.service_list') }}">Browse services</a>
+        {% if current_user.is_authenticated %}
+            {% if current_user.role == 'customer' %}
+                <a class="btn" href="{{ url_for('customer.my_appointments') }}">My appointments</a>
+            {% elif current_user.role == 'admin' %}
+                <a class="btn" href="{{ url_for('auth.create_staff') }}">Create a stylist account</a>
+            {% endif %}
+        {% else %}
+            <a class="btn" href="{{ url_for('auth.register') }}">Create an account</a>
+            <a class="btn" href="{{ url_for('auth.login') }}">Sign in</a>
+        {% endif %}
+    </div>
+</section>
+
+<div class="panel-grid">
+    <div class="panel">
+        <h2>Customers</h2>
+        <p>Compare services, pick a stylist and a free start time, then move or cancel your booking yourself.</p>
+    </div>
+    <div class="panel">
+        <h2>Stylists</h2>
+        <p>Your own daily list, with one tap to record an arrival and mark the service completed or missed.</p>
+    </div>
+    <div class="panel">
+        <h2>Administrator</h2>
+        <p>Services, skills, workstations, shifts and time away, kept consistent with the bookings already made.</p>
+    </div>
+</div>
 {% endblock %}

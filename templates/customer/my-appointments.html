@@ -2,68 +2,84 @@
 {% block title %}My appointments · Hair Salon{% endblock %}
 
 {% block customer_content %}
-<h1>My appointments</h1>
+<div class="page-head">
+    <p class="eyebrow">Your bookings</p>
+    <h1>My appointments</h1>
+    <p class="lede">Newest first. You can move an appointment any time before it starts, and cancel it up to two hours ahead.</p>
+</div>
 
 {% if booked %}
-<p role="status" class="notice" data-booked="{{ booked }}">Your appointment number {{ booked }} is confirmed.</p>
+<div class="alert alert--ok" role="status" data-booked="{{ booked }}">
+    Appointment #{{ booked }} is confirmed and now appears on your stylist's schedule.
+</div>
 {% endif %}
 
 {% if error %}
-<p class="error" role="alert" data-booking-error>{{ error }}</p>
+<div class="alert alert--error" role="alert" data-booking-error>{{ error }}</div>
 {% endif %}
 
 {% if appointments %}
-<table class="grid" data-appointment-count="{{ appointments|length }}">
-    <thead>
-        <tr>
-            <th scope="col">When</th>
-            <th scope="col">Service</th>
-            <th scope="col">Stylist</th>
-            <th scope="col">Chair</th>
-            <th scope="col">Price</th>
-            <th scope="col">Status</th>
-            <th scope="col"><span class="sr-only">Actions</span></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for appointment in appointments %}
-        <tr data-appointment-id="{{ appointment.id }}"
-            data-customer-id="{{ appointment.customer_id }}"
-            data-stylist-id="{{ appointment.stylist_id }}"
-            data-service-id="{{ appointment.service_id }}"
-            data-workstation-id="{{ appointment.workstation_id }}"
-            data-status="{{ appointment.status }}"
-            data-can-cancel="{{ 'true' if appointment.can_cancel else 'false' }}"
-            data-can-reschedule="{{ 'true' if appointment.can_reschedule else 'false' }}">
-            <td>
-                <span class="when">{{ appointment.starts_at }}</span>
-                <div class="muted">until {{ appointment.ends_at }}</div>
-            </td>
-            <td>{{ appointment.service_name }}</td>
-            <td>{{ appointment.stylist_name }}</td>
-            <td>{{ appointment.workstation_label }}</td>
-            <td class="price">{{ appointment.price }}</td>
-            <td><span class="status status-{{ appointment.status }}">{{ appointment.status|replace('_', ' ') }}</span></td>
-            <td class="actions">
-                {% if appointment.can_reschedule %}
-                <a class="button" href="{{ url_for('customer.reschedule_form', appointment_id=appointment.id) }}">Change time</a>
-                {% endif %}
-                {% if appointment.can_cancel %}
-                <form method="post" class="inline-form"
-                      action="{{ url_for('customer.cancel_appointment', appointment_id=appointment.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="button">Cancel</button>
-                </form>
-                {% endif %}
-                {% if not appointment.can_cancel and not appointment.can_reschedule %}
-                <span class="muted">&mdash;</span>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="table-wrap">
+    <table class="grid" data-appointment-count="{{ appointments|length }}">
+        <thead>
+            <tr>
+                <th scope="col">When</th>
+                <th scope="col">Service</th>
+                <th scope="col">Stylist</th>
+                <th scope="col">Chair</th>
+                <th scope="col">Price</th>
+                <th scope="col">Status</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for appointment in appointments %}
+            <tr data-appointment-id="{{ appointment.id }}"
+                data-customer-id="{{ appointment.customer_id }}"
+                data-stylist-id="{{ appointment.stylist_id }}"
+                data-service-id="{{ appointment.service_id }}"
+                data-workstation-id="{{ appointment.workstation_id }}"
+                data-status="{{ appointment.status }}"
+                data-can-cancel="{{ 'true' if appointment.can_cancel else 'false' }}"
+                data-can-reschedule="{{ 'true' if appointment.can_reschedule else 'false' }}">
+                <td data-label="When">
+                    <span class="cell-stack">
+                        <time class="when" datetime="{{ appointment.starts_at }}">{{ appointment.date_label }}</time>
+                        <small>{{ appointment.time_label }}</small>
+                    </span>
+                </td>
+                <td data-label="Service" class="cell-strong">{{ appointment.service_name }}</td>
+                <td data-label="Stylist">{{ appointment.stylist_name }}</td>
+                <td data-label="Chair">{{ appointment.workstation_label }}</td>
+                <td data-label="Price"><span class="price">{{ appointment.price }}</span></td>
+                <td data-label="Status">
+                    <span class="badge badge--{{ appointment.status }}">{{ appointment.status|replace('_', ' ')|capitalize }}</span>
+                </td>
+                <td data-label="Actions" class="is-actions">
+                    <div class="actions">
+                        {% if appointment.can_reschedule %}
+                        <a class="btn btn--sm" href="{{ url_for('customer.reschedule_form', appointment_id=appointment.id) }}">Change time</a>
+                        {% endif %}
+                        {% if appointment.can_cancel %}
+                        <form method="post" action="{{ url_for('customer.cancel_appointment', appointment_id=appointment.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn--sm btn--danger">Cancel</button>
+                        </form>
+                        {% endif %}
+                        {% if not appointment.can_cancel and not appointment.can_reschedule %}
+                        <span class="muted">Nothing to do</span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% else %}
-<p class="empty">You have no appointments yet.</p>
+<div class="empty">
+    You have no appointments yet.<br>
+    <a href="{{ url_for('customer.service_list') }}">Browse the services</a> to book your first one.
+</div>
 {% endif %}
 {% endblock %}
