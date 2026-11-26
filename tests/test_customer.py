@@ -224,6 +224,93 @@ class CustomerPagesTest(unittest.TestCase):
         self.assertIn("You have no appointments yet.", body)
         self.assertEqual(self._row_ids(body), [])
 
+    # ------------------------------------------------------------------- C-3
+
+    def test_booking_page_renders_the_slot_loader_for_a_bookable_pair(self):
+        self._login("alice@example.com")
+        response = self.client.get(
+            f"/book?service_id={self.haircut.id}&stylist_id={self.stylist.id}"
+        )
+        body = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('data-slots-url="/api/slots"', body)
+        self.assertIn(f'data-service-id="{self.haircut.id}"', body)
+        self.assertIn(f'data-stylist-id="{self.stylist.id}"', body)
+        self.assertIn("booking.js", body)
+
+    def test_booking_page_limits_the_date_range_to_the_contract_window(self):
+        self._login("alice@example.com")
+        body = self.client.get(
+            f"/book?service_id={self.haircut.id}&stylist_id={self.stylist.id}"
+        ).get_data(as_text=True)
+        today = datetime.now().date()
+        self.assertIn(f'min="{today.isoformat()}"', body)
+        self.assertIn(f'max="{(today + timedelta(days=60)).isoformat()}"', body)
+
+    def test_booking_page_rejects_a_missing_parameter(self):
+        self._login("alice@example.com")
+        self.assertEqual(self.client.get("/book").status_code, 400)
+        self.assertEqual(
+            self.client.get(f"/book?service_id={self.haircut.id}").status_code, 400
+        )
+
+    def test_booking_page_hides_an_inactive_service(self):
+        self._login("alice@example.com")
+        self.assertEqual(
+            self.client.get(
+                f"/book?service_id={self.colouring.id}&stylist_id={self.stylist.id}"
+            ).status_code,
+            404,
+        )
+
+    def test_booking_page_rejects_a_stylist_without_the_skill(self):
+        self._login("alice@example.com")
+        self.assertEqual(
+            self.client.get(
+                f"/book?service_id={self.haircut.id}&stylist_id={self.other_stylist.id}"
+            ).status_code,
+            404,
+        )
+
+    def test_booking_page_rejects_an_inactive_stylist(self):
+        self._login("alice@example.com")
+        self.assertEqual(
+            self.client.get(
+                f"/book?service_id={self.haircut.id}&stylist_id={self.retired_stylist.id}"
+            ).status_code,
+            404,
+        )
+
+    def test_booking_page_rejects_a_user_who_is_not_a_stylist(self):
+        self._login("alice@example.com")
+        self.assertEqual(
+            self.client.get(
+                f"/book?service_id={self.haircut.id}&stylist_id={self.bob.id}"
+            ).status_code,
+            404,
+        )
+
+    def test_booking_page_requires_a_customer_session(self):
+        self.assertEqual(
+            self.client.get(
+                f"/book?service_id={self.haircut.id}&stylist_id={self.stylist.id}"
+            ).status_code,
+            302,
+        )
+        self._login("stylist@example.com")
+        self.assertEqual(
+            self.client.get(
+                f"/book?service_id={self.haircut.id}&stylist_id={self.stylist.id}"
+            ).status_code,
+            403,
+        )
+
+    def test_service_detail_links_to_the_booking_page(self):
+        body = self.client.get(f"/services/{self.haircut.id}").get_data(as_text=True)
+        self.assertIn(
+            f"/book?service_id={self.haircut.id}&amp;stylist_id={self.stylist.id}", body
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

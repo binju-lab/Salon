@@ -1,0 +1,51 @@
+{% extends "customer/layout.html" %}
+{% block title %}Book {{ service.name }} · Hair Salon{% endblock %}
+
+{% block customer_content %}
+<p><a href="{{ url_for('customer.service_detail', service_id=service.id) }}">&larr; {{ service.name }}</a></p>
+
+<h1>Book a time</h1>
+
+<dl class="facts">
+    <dt>Service</dt>
+    <dd>{{ service.name }}, {{ service.duration_minutes }} minutes</dd>
+
+    <dt>Price</dt>
+    <dd class="price">{{ service.price }}</dd>
+
+    <dt>Stylist</dt>
+    <dd>{{ stylist.name }}</dd>
+</dl>
+
+<form method="post" action="/book" id="booking-form" class="booking"
+      data-slots-url="/api/slots"
+      data-service-id="{{ service.id }}"
+      data-stylist-id="{{ stylist.id }}">
+    {#
+      The POST handler is added in C-4. Until then this form submits to an
+      endpoint that only accepts GET, so the browser gets a 405.
+    #}
+    <input type="hidden" name="service_id" value="{{ service.id }}">
+    <input type="hidden" name="stylist_id" value="{{ stylist.id }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <p>
+        <label for="booking-date">Date</label>
+        <input type="date" id="booking-date" name="date"
+               value="{{ today }}" min="{{ today }}" max="{{ last_bookable_day }}" required>
+    </p>
+
+    <fieldset class="slots-fieldset">
+        <legend>Available times</legend>
+        <p id="slot-status" class="muted" role="status">Loading times&hellip;</p>
+        <div id="slot-list" class="slots" aria-live="polite"></div>
+        <input type="hidden" id="booking-start" name="start" value="" required>
+    </fieldset>
+
+    <button type="submit" id="booking-submit" class="button primary" disabled>Confirm booking</button>
+</form>
+{% endblock %}
+
+{% block customer_scripts %}
+<script src="{{ url_for('static', filename='js/booking.js') }}" defer></script>
+{% endblock %}

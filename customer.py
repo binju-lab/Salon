@@ -25,6 +25,9 @@ customer = Blueprint("customer", __name__)
 # Team decision D2: a cancellation must be at least 2 hours before the start.
 CANCEL_WINDOW = timedelta(hours=2)
 
+# Team decision D2: bookings are accepted between today and today + 60 days.
+BOOKING_WINDOW_DAYS = 60
+
 
 def _format_datetime(value):
     """Contract format: YYYY-MM-DDTHH:MM, minute precision, no timezone."""
@@ -128,4 +131,46 @@ def my_appointments():
         "customer/my-appointments.html",
         appointments=[_appointment_payload(row, now) for row in appointments],
         booked=request.args.get("booked", type=int),
+    )
+
+
+def _require_bookable(service_id, stylist_id):
+    """Reject anything the booking form could not honestly offer."""
+    service = db.session.get(Service, service_id)
+    if service is None or not service.is_active:
+        abort(404)
+
+    stylist = db.session.get(User, stylist_id)
+    if stylist is None or stylist.role != "stylist" or not stylist.is_active:
+        abort(404)
+
+    if db.session.get(StaffService, (stylist_id, service_id)) is None:
+        abort(404)
+
+    return service, stylist
+
+
+@customer.get("/book")
+@roles_required("customer")
+def book():
+    """C-3: booking form. Slots arrive later from GET /api/slots over fetch.
+
+    The form itself only renders; the slot list is filled by static/js/booking.js
+    so the page keeps working while the availability query is slow.
+    """
+    service_id = request.args.get("service_id", type=int)
+    stylist_id = request.args.get("stylist_id", type=int)
+    if service_id is None or stylist_id is None:
+        abort(400)
+
+    service, stylist = _require_bookable(service_id, stylist_id)
+
+    today = datetime.now().date()
+    last_bookable_day = today + timedelta(days=BOOKING_WINDOW_DAYS)
+    return render_template(
+        "customer/book.html",
+        service=_service_payload(service),
+        stylist={"id": stylist.id, "name": stylist.name},
+        today=today.isoformat(),
+        last_bookable_day=last_bookable_day.isoformat(),
     )

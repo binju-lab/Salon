@@ -42,7 +42,7 @@ Add a `.gitattributes` containing `* text=auto eol=lf` before a macOS contributo
 .\.venv\Scripts\python.exe -m unittest discover -s tests
 ```
 
-Expect `Ran 101 tests ... OK`. Breakdown: `test_auth.py` 9, `test_contracts.py` 9, `test_booking_rules.py` 68, `test_customer.py` 15. Any other number means the baseline is broken; repair it before adding features.
+Expect `Ran 110 tests ... OK`. Breakdown: `test_auth.py` 9, `test_contracts.py` 9, `test_booking_rules.py` 68, `test_customer.py` 24. Any other number means the baseline is broken; repair it before adding features.
 
 ## File ownership
 
@@ -59,6 +59,6 @@ Blueprints currently wired: `auth`, `slots_api` (from `availability.py`), `custo
 
 ## Current gaps
 
-- `/book` and the three write routes (`POST /book`, `/cancel`, `/reschedule`) are not implemented. `booking.py` already exports `create_appointment`, `reschedule` and `cancel`; the customer blueprint only needs to call them and map `SlotTaken`, `InvalidState`, `ValidationFailed` and `DateOutOfRange` to the contract status codes.
+- `GET /book` renders and fills its slot list from `/api/slots` through `static/js/booking.js`. The three write routes are still missing: `POST /book`, `POST /appointments/<id>/cancel`, `GET|POST /appointments/<id>/reschedule`. `booking.py` already exports `create_appointment`, `reschedule` and `cancel`; the customer blueprint only has to call them and map `SlotTaken`, `InvalidState`, `ValidationFailed` and `DateOutOfRange` to the contract status codes. The booking form already posts to `/book` and carries `service_id`, `stylist_id`, `date`, `start` and `csrf_token`.
 - `templates/base.html` has no stylesheet link and no customer navigation. Customer pages therefore carry a local sub-nav and a body-level `<link rel="stylesheet">` in `templates/customer/layout.html`. Move both into `base.html` when B next edits it.
 - `staff.py` and `admin.py` do not exist. Every `/staff/*` and `/admin/*` route is missing.

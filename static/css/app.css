@@ -196,6 +196,87 @@ h2 {
     border: 0;
 }
 
+/* Booking page */
+
+.booking {
+    max-width: 34rem;
+}
+
+.booking label {
+    display: block;
+    margin-bottom: .3rem;
+    color: var(--muted);
+}
+
+.booking input[type="date"] {
+    padding: .45rem .6rem;
+    border: 1px solid var(--line);
+    border-radius: .4rem;
+    font: inherit;
+    background: var(--surface);
+}
+
+.slots-fieldset {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border: 1px solid var(--line);
+    border-radius: .5rem;
+    background: var(--surface);
+}
+
+.slots-fieldset legend {
+    padding: 0 .4rem;
+    color: var(--muted);
+    font-size: .9rem;
+}
+
+.slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: .75rem;
+}
+
+.slot {
+    padding: .4rem .8rem;
+    border: 1px solid var(--line);
+    border-radius: .4rem;
+    background: var(--surface);
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+}
+
+.slot:hover {
+    border-color: var(--accent);
+}
+
+.slot[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+}
+
+.button.primary {
+    padding: .55rem 1.1rem;
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.button.primary:disabled {
+    border-color: var(--line);
+    background: #e9eef3;
+    color: var(--muted);
+    cursor: not-allowed;
+}
+
+.people li {
+    margin-bottom: .5rem;
+}
+
 @media (max-width: 40rem) {
     .grid thead {
         display: none;

@@ -22,16 +22,13 @@
 {% if stylists %}
 <ul class="people" data-stylist-count="{{ stylists|length }}">
     {% for stylist in stylists %}
-    <li data-stylist-id="{{ stylist.id }}">{{ stylist.name }}</li>
+    <li data-stylist-id="{{ stylist.id }}">
+        {{ stylist.name }}
+        <a class="button" href="{{ url_for('customer.book', service_id=service.id, stylist_id=stylist.id) }}">Choose a time</a>
+    </li>
     {% endfor %}
 </ul>
 {% else %}
 <p class="empty">No stylist is currently available for this service.</p>
 {% endif %}
-
-{#
-  C-3 will add a "Choose a time" link to /book here.  It is left out for now
-  because /book does not exist until Role A exposes the availability function,
-  and url_for() on a missing endpoint raises at render time.
-#}
 {% endblock %}
