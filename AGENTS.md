@@ -34,7 +34,19 @@ Add a `.gitattributes` containing `* text=auto eol=lf` before a macOS contributo
 .\.venv\Scripts\python.exe -m flask --app app run
 ```
 
-`seed` fills an empty database only; rerunning is a no-op. All seeded accounts share the fixed default local demo password `SalonDemo123!` (override with `SEED_PASSWORD`, 8–128 non-blank characters, before running `seed`). Delete `instance/salon.sqlite3` to start from scratch.
+`seed` fills an empty database only; rerunning is a no-op. Delete `instance/salon.sqlite3` and seed again whenever a fresh demo dataset or a schema change is needed.
+
+Seeded accounts — all five share the password `SalonDemo123!` (override with `SEED_PASSWORD`, 8–128 non-blank characters, before running `seed`):
+
+| Email | Role |
+|---|---|
+| `admin@example.com` | admin |
+| `stylist1@example.com` | stylist |
+| `stylist2@example.com` | stylist |
+| `customer1@example.com` | customer |
+| `customer2@example.com` | customer |
+
+A database seeded before the password became fixed keeps its old random password, because `seed` skips a non-empty database. Deleting `instance/salon.sqlite3` is the only way to reset it.
 
 ## Test
 
