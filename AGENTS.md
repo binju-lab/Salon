@@ -8,8 +8,6 @@ Notes for coding agents. No human-facing prose on purpose.
 
 Not part of the contract and free to change: folder layout, ORM style, query style, test framework, HTML and CSS.
 
-`README.md` links to `docs/role-b-handoff.md` and `docs/spec/README.md`. None of those exist in this repo. Ignore the links.
-
 ## Environment
 
 Each clone builds its own virtual environment.
@@ -25,7 +23,7 @@ If `pip` exits with `FileNotFoundError: No usable temporary directory found`, re
 $env:TEMP="$PWD\.tmp"; $env:TMP=$env:TEMP; $env:TMPDIR=$env:TEMP
 ```
 
-Add a `.gitattributes` containing `* text=auto eol=lf` before a macOS contributor joins; without it every file shows as modified after each pull.
+`.gitattributes` enforces LF line endings (`* text=auto eol=lf`) across Windows and macOS contributors.
 
 ## Run
 
@@ -54,7 +52,7 @@ A database seeded before the password became fixed keeps its old random password
 .\.venv\Scripts\python.exe -m unittest discover -s tests
 ```
 
-Expect `Ran 136 tests ... OK`. Breakdown: `test_auth.py` 9, `test_contracts.py` 9, `test_booking_rules.py` 68, `test_customer.py` 50. Any other number means the baseline is broken; repair it before adding features.
+Expect `Ran 138 tests ... OK`. Breakdown: `test_auth.py` 9, `test_contracts.py` 11, `test_booking_rules.py` 68, `test_customer.py` 50. Any other number means the baseline is broken; repair it before adding features.
 
 ## File ownership
 
@@ -72,5 +70,4 @@ Blueprints currently wired: `auth`, `slots_api` (from `availability.py`), `custo
 ## Current gaps
 
 - Role C scope is complete: catalogue, detail, booking form, my appointments, create, cancel and reschedule. Every write goes through `booking.py`; `booking.BookingError` subclasses already carry `error_code` and `http_status`, so views only translate them. Do not duplicate availability or transaction logic in a view.
-- `templates/base.html` has no stylesheet link and no customer navigation. Customer pages therefore carry a local sub-nav and a body-level `<link rel="stylesheet">` in `templates/customer/layout.html`. Move both into `base.html` when B next edits it.
 - `staff.py` and `admin.py` do not exist. Every `/staff/*` and `/admin/*` route is missing.

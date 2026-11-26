@@ -97,7 +97,7 @@ templates/errors/csrf.html
 templates/errors/error.html
 tests/test_auth.py           9 例
 tests/test_booking_rules.py  6 例（T3/T4/T6/T7 的约束行为）
-tests/test_contracts.py      9 例
+tests/test_contracts.py      11 例
 requirements.txt             Flask, Flask-Login, Flask-SQLAlchemy, Flask-WTF, SQLAlchemy, WTForms, email-validator
 ```
 

@@ -1,8 +1,8 @@
 # 理发店预约系统
 
-这是 COMP3019J 小组项目的角色 B 修复版交付。它提供 Flask 启动入口、八张 SQLite 表、演示数据、注册登录与权限检查、精确金额转换、HTML/JSON 错误约定，以及预约数据库规则测试。队友可按[数据与权限交接文档](docs/role-b-handoff.md)和[修订规格](docs/spec/README.md)接入预约调度、顾客端、员工端和管理端。
+这是 COMP3019J 小组项目的单店理发店预约系统。项目采用 Flask + SQLite + SQLAlchemy，统一接口与数据契约见 [统一规格 docs/spec.md](docs/spec.md)，开发与测试说明见 [AGENTS.md](AGENTS.md)。
 
-**真实范围**：当前 21 项独立测试通过；A 的 `/api/slots` 和真实预约事务、C 的顾客页面、D 的员工/管理业务页面仍待接入。H01–H07 的证据、待确认规则和分工见[修复追踪表](docs/spec/H01-H07_修复追踪.md)。现有 `instance/salon.sqlite3` 不在源码包内，本次未修改其结构或数据。
+**当前进度**：角色 B 底座（八张表、注册登录与权限、精确金额转换、JSON/HTML 错误约定、演示数据）、角色 A（`/api/slots` 与预约/改期/取消事务）和角色 C（服务目录、预约下单、我的预约、改期与取消页面）均已接入；角色 D 的员工端 `/staff/*` 与管理端 `/admin/*` 待接入。`instance/salon.sqlite3` 不纳入版本库。
 
 ## 本地启动与验收
 
@@ -43,7 +43,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-本次实际结果为 **Ran 21 tests，OK**。T3、T4、T6、T7 当前验证的是数据库行为，A 接入后再经真实预约路由跑同样的场景。T1、T2、T5、T8、20 请求并发和唯一约束对照实验仍待 A；C/D 页面验收也不能由这些数据库测试代替。
+当前全量测试为 **Ran 138 tests，OK**（`test_auth.py` 9、`test_contracts.py` 11、`test_booking_rules.py` 68、`test_customer.py` 50）。角色 D 的员工/管理页面测试待接入后补充。
 
 ## 课程交付
 

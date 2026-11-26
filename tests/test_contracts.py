@@ -23,7 +23,7 @@ from models import (
     db,
 )
 from money import MAX_PRICE_MINOR, PriceValidationError, price_from_minor, price_to_minor
-from seed import DEFAULT_DEMO_PASSWORD
+from seed import DEFAULT_DEMO_PASSWORD, add_demo_data
 
 
 class MoneyContractTests(unittest.TestCase):
@@ -346,3 +346,143 @@ class SeedPreservationTests(unittest.TestCase):
                         self.assertEqual(inspect(db.engine).get_table_names(), [])
                 finally:
                     self._dispose_app(bad_app)
+
+    def test_seed_provides_d2_demo_data_for_cancel_window_and_today_booking(self):
+        app = self._make_isolated_app("isolated-seed-d2-test")
+        try:
+            runner = app.test_cli_runner()
+            with mock.patch.dict(os.environ, {"SEED_PASSWORD": ""}, clear=False):
+                result = runner.invoke(args=["seed"])
+            self.assertEqual(result.exit_code, 0, result.output)
+
+            now = datetime.now().replace(second=0, microsecond=0)
+            today = now.date()
+            tomorrow = today + timedelta(days=1)
+
+            with app.app_context():
+                shift_dates = set(db.session.scalars(select(WorkingShift.work_date)).all())
+                self.assertIn(today, shift_dates)
+                self.assertIn(tomorrow, shift_dates)
+
+                appointments = db.session.scalars(
+                    select(Appointment).order_by(Appointment.starts_at)
+                ).all()
+                self.assertEqual(len(appointments), 2)
+                soon, later = appointments
+                self.assertGreater(soon.starts_at, now)
+                self.assertLessEqual(soon.starts_at, now + timedelta(hours=2))
+                self.assertGreater(later.starts_at, now + timedelta(hours=2))
+                for appointment in appointments:
+                    self.assertLessEqual(appointment.starts_at.date(), today + timedelta(days=60))
+                soon_id, later_id = soon.id, later.id
+
+            client, login_response = self._login_as(app, "customer1@example.com", DEFAULT_DEMO_PASSWORD)
+            self.assertEqual(login_response.status_code, 302)
+
+            page = client.get("/my-appointments")
+            self.assertEqual(page.status_code, 200)
+            body = page.get_data(as_text=True)
+            self.assertIn(f'data-appointment-id="{soon_id}"', body)
+            self.assertIn('data-can-cancel="false"', body)
+            self.assertIn('data-can-reschedule="true"', body)
+            self.assertIn(f'data-appointment-id="{later_id}"', body)
+            self.assertIn('data-can-cancel="true"', body)
+
+            parser = _CsrfTokenParser()
+            parser.feed(body)
+            self.assertTrue(parser.token)
+
+            blocked = client.post(
+                f"/appointments/{soon_id}/cancel",
+                headers={"Accept": "application/json", "X-CSRFToken": parser.token},
+            )
+            self.assertEqual(blocked.status_code, 409)
+            self.assertEqual(blocked.get_json()["error"], "CANCEL_WINDOW_CLOSED")
+
+            allowed = client.post(
+                f"/appointments/{later_id}/cancel",
+                data={"csrf_token": parser.token},
+            )
+            self.assertEqual(allowed.status_code, 303)
+            with app.app_context():
+                self.assertEqual(db.session.get(Appointment, soon_id).status, "confirmed")
+                self.assertEqual(db.session.get(Appointment, later_id).status, "cancelled")
+        finally:
+            self._dispose_app(app)
+
+        for fixed_now in (
+            datetime(2030, 5, 1, 10, 0),
+            datetime(2030, 5, 1, 19, 7),
+            datetime(2030, 5, 1, 22, 45),
+            datetime(2030, 5, 1, 23, 30),
+        ):
+            with self.subTest(fixed_now=fixed_now.isoformat()):
+                clock_app = self._make_isolated_app("isolated-seed-clock-edge-test")
+                try:
+                    with clock_app.app_context():
+                        db.create_all()
+                        add_demo_data(
+                            DEFAULT_DEMO_PASSWORD,
+                            fixed_now.date() + timedelta(days=1),
+                            now=fixed_now,
+                        )
+                        db.session.commit()
+                        soon, later = db.session.scalars(
+                            select(Appointment).order_by(Appointment.starts_at)
+                        ).all()
+                        self.assertGreater(soon.starts_at, fixed_now)
+                        self.assertLessEqual(soon.starts_at, fixed_now + timedelta(hours=2))
+                        self.assertEqual(soon.starts_at.minute % 15, 0)
+                        self.assertGreater(later.starts_at, fixed_now + timedelta(hours=2))
+                        shifts = db.session.scalars(
+                            select(WorkingShift).where(
+                                WorkingShift.stylist_id == soon.stylist_id,
+                                WorkingShift.work_date == soon.starts_at.date(),
+                            )
+                        ).all()
+                        self.assertTrue(
+                            any(
+                                shift.start_time <= soon.starts_at.time()
+                                and soon.ends_at.time() <= shift.end_time
+                                for shift in shifts
+                            )
+                        )
+                finally:
+                    self._dispose_app(clock_app)
+
+    def test_base_template_includes_stylesheet_and_role_appropriate_navigation(self):
+        app = self._make_isolated_app("isolated-base-template-test")
+        try:
+            runner = app.test_cli_runner()
+            with mock.patch.dict(os.environ, {"SEED_PASSWORD": ""}, clear=False):
+                self.assertEqual(runner.invoke(args=["seed"]).exit_code, 0)
+
+            anon = app.test_client()
+            for path in ("/", "/auth/login", "/services"):
+                html = anon.get(path).get_data(as_text=True)
+                head, body = html.split("</head>", 1)
+                self.assertIn('href="/static/css/app.css"', head)
+                self.assertNotIn('href="/static/css/app.css"', body)
+                self.assertNotIn('class="subnav"', body)
+                self.assertIn('href="/services"', body)
+                self.assertNotIn('href="/my-appointments"', body)
+
+            customer_client, response = self._login_as(app, "customer1@example.com", DEFAULT_DEMO_PASSWORD)
+            self.assertEqual(response.status_code, 302)
+            for path in ("/", "/services", "/my-appointments"):
+                html = customer_client.get(path).get_data(as_text=True)
+                head, body = html.split("</head>", 1)
+                self.assertIn('href="/static/css/app.css"', head)
+                self.assertNotIn('href="/static/css/app.css"', body)
+                self.assertNotIn('class="subnav"', body)
+                self.assertIn('href="/services"', body)
+                self.assertIn('href="/my-appointments"', body)
+
+            admin_client, response = self._login_as(app, "admin@example.com", DEFAULT_DEMO_PASSWORD)
+            self.assertEqual(response.status_code, 302)
+            admin_html = admin_client.get("/").get_data(as_text=True)
+            self.assertIn('href="/services"', admin_html)
+            self.assertIn('href="/auth/staff"', admin_html)
+            self.assertNotIn('href="/my-appointments"', admin_html)
+        finally:
+            self._dispose_app(app)

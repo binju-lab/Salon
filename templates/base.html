@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% block title %}Hair Salon{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
     <nav aria-label="Main navigation">
         <a href="{{ url_for('index') }}">Hair Salon</a>
+        <a href="{{ url_for('customer.service_list') }}">Services</a>
         {% if current_user.is_authenticated %}
-            {% if current_user.role == 'admin' %}
+            {% if current_user.role == 'customer' %}
+                <a href="{{ url_for('customer.my_appointments') }}">My appointments</a>
+            {% elif current_user.role == 'admin' %}
                 <a href="{{ url_for('auth.create_staff') }}">Create stylist account</a>
             {% endif %}
             <form method="post" action="{{ url_for('auth.logout') }}">

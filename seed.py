@@ -1,5 +1,5 @@
 import os
-from datetime import date, datetime, time, timedelta
+from datetime import datetime, time, timedelta
 
 import click
 
@@ -57,7 +57,8 @@ def register_seed_command(app):
             if any(db.session.scalar(db.select(model).limit(1)) for model in tables):
                 click.echo("Database already contains data. Seed skipped.")
                 return
-            users = add_demo_data(password, date.today() + timedelta(days=1))
+            now = datetime.now().replace(second=0, microsecond=0)
+            users = add_demo_data(password, now.date() + timedelta(days=1), now=now)
             accounts = [(user.email, user.role) for user in users]
 
         click.echo("Local demonstration accounts created:")
@@ -66,7 +67,51 @@ def register_seed_command(app):
         click.echo(f"Demo password: {password}")
 
 
-def add_demo_data(password, work_date):
+def _next_grid_after(moment):
+    """Return the first 15-minute boundary strictly after ``moment``."""
+    minutes = moment.hour * 60 + moment.minute
+    next_minutes = ((minutes // 15) + 1) * 15
+    return datetime.combine(moment.date(), time()) + timedelta(minutes=next_minutes)
+
+
+def _soon_appointment_start(now):
+    """Pick a 15-minute-aligned future start within the 2-hour cancel window."""
+    next_grid = _next_grid_after(now)
+    candidate = next_grid + timedelta(minutes=45)
+    latest_today_start = datetime.combine(now.date(), time(23, 15))
+    if candidate <= latest_today_start:
+        return candidate
+    if next_grid <= latest_today_start and latest_today_start - now >= timedelta(minutes=15):
+        return latest_today_start
+    return candidate
+
+
+def _add_appointment_with_slots(customer, stylist, service, workstation, starts_at):
+    appointment = Appointment(
+        customer=customer,
+        stylist=stylist,
+        service=service,
+        workstation=workstation,
+        starts_at=starts_at,
+        ends_at=starts_at + timedelta(minutes=service.duration_minutes),
+        agreed_price_minor=service.price_minor,
+        status="confirmed",
+    )
+    db.session.add(appointment)
+    for offset in range(0, service.duration_minutes, 15):
+        db.session.add(SlotAllocation(
+            appointment=appointment,
+            stylist=stylist,
+            workstation=workstation,
+            slot_start=starts_at + timedelta(minutes=offset),
+        ))
+    return appointment
+
+
+def add_demo_data(password, work_date, now=None):
+    now = (now or datetime.now()).replace(second=0, microsecond=0)
+    today = now.date()
+
     admin = User(name="Demo Admin", email="admin@example.com", role="admin")
     stylist1 = User(name="Demo Stylist 1", email="stylist1@example.com", role="stylist")
     stylist2 = User(name="Demo Stylist 2", email="stylist2@example.com", role="stylist")
@@ -95,14 +140,42 @@ def add_demo_data(password, work_date):
     colour_station = Workstation(label="Colour Station 1", workstation_type="colour")
     db.session.add_all([haircut, colouring, chair, colour_station])
 
+    soon_start = _soon_appointment_start(now)
+    soon_end = soon_start + timedelta(minutes=haircut.duration_minutes)
+
+    if soon_start.date() == today:
+        today_shift_start = min(time(9), soon_start.time())
+        padded_end = min(
+            soon_end + timedelta(hours=2),
+            datetime.combine(today, time(23, 45)),
+        )
+        today_shift_end = max(time(17), padded_end.time())
+        next_day_shift_start = time(9)
+    else:
+        today_shift_start = time(9)
+        today_shift_end = time(23, 45)
+        next_day_shift_start = min(time(9), soon_start.time())
+
     for stylist in (stylist1, stylist2):
-        db.session.add_all([
+        records = [
             StaffService(stylist=stylist, service=haircut),
             StaffService(stylist=stylist, service=colouring),
             WorkingShift(
-                stylist=stylist, work_date=work_date, start_time=time(9), end_time=time(17)
+                stylist=stylist,
+                work_date=today,
+                start_time=today_shift_start,
+                end_time=today_shift_end,
             ),
-        ])
+        ]
+        if work_date != today:
+            records.append(WorkingShift(
+                stylist=stylist,
+                work_date=work_date,
+                start_time=next_day_shift_start,
+                end_time=time(17),
+            ))
+        db.session.add_all(records)
+
     db.session.add_all([
         Unavailability(
             stylist=stylist1,
@@ -118,23 +191,10 @@ def add_demo_data(password, work_date):
         ),
     ])
 
-    starts_at = datetime.combine(work_date, time(10))
-    appointment = Appointment(
-        customer=customer1,
-        stylist=stylist1,
-        service=colouring,
-        workstation=colour_station,
-        starts_at=starts_at,
-        ends_at=starts_at + timedelta(minutes=colouring.duration_minutes),
-        agreed_price_minor=colouring.price_minor,
-        status="confirmed",
+    # Within 2 hours of now: demonstrates CANCEL_WINDOW_CLOSED (reschedule still allowed).
+    _add_appointment_with_slots(customer1, stylist2, haircut, chair, soon_start)
+    # Tomorrow 10:00 (>2 hours ahead): demonstrates normal cancellation and rescheduling.
+    _add_appointment_with_slots(
+        customer1, stylist1, colouring, colour_station, datetime.combine(work_date, time(10))
     )
-    db.session.add(appointment)
-    for offset in range(0, colouring.duration_minutes, 15):
-        db.session.add(SlotAllocation(
-            appointment=appointment,
-            stylist=stylist1,
-            workstation=colour_station,
-            slot_start=starts_at + timedelta(minutes=offset),
-        ))
     return users

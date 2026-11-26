@@ -228,17 +228,29 @@ class SeedTests(unittest.TestCase):
             )
             roles = db.session.scalars(select(User.role)).all()
             self.assertCountEqual(roles, ["admin", "stylist", "stylist", "customer", "customer"])
-            booking = db.session.scalars(select(Appointment)).one()
-            slots = db.session.scalars(select(SlotAllocation).order_by(SlotAllocation.slot_start)).all()
-            self.assertEqual(booking.status, "confirmed")
-            self.assertGreater(booking.starts_at, datetime.now())
-            self.assertEqual(booking.ends_at, booking.starts_at + timedelta(hours=1))
-            self.assertEqual(len(slots), 4)
-            for index, slot in enumerate(slots):
-                self.assertEqual(slot.appointment_id, booking.id)
-                self.assertEqual(slot.stylist_id, booking.stylist_id)
-                self.assertEqual(slot.workstation_id, booking.workstation_id)
-                self.assertEqual(slot.slot_start, booking.starts_at + index * SLOT_LENGTH)
+            now = datetime.now()
+            bookings = db.session.scalars(select(Appointment).order_by(Appointment.starts_at)).all()
+            self.assertEqual(len(bookings), 2)
+            soon_booking, next_day_booking = bookings
+            self.assertEqual(soon_booking.status, "confirmed")
+            self.assertGreater(soon_booking.starts_at, now)
+            self.assertLessEqual(soon_booking.starts_at, now + timedelta(hours=2))
+            self.assertEqual(soon_booking.ends_at, soon_booking.starts_at + timedelta(minutes=30))
+            self.assertEqual(next_day_booking.status, "confirmed")
+            self.assertGreater(next_day_booking.starts_at, now + timedelta(hours=2))
+            self.assertEqual(next_day_booking.ends_at, next_day_booking.starts_at + timedelta(hours=1))
+            for booking, expected_slots in ((soon_booking, 2), (next_day_booking, 4)):
+                slots = db.session.scalars(
+                    select(SlotAllocation)
+                    .where(SlotAllocation.appointment_id == booking.id)
+                    .order_by(SlotAllocation.slot_start)
+                ).all()
+                self.assertEqual(len(slots), expected_slots)
+                for index, slot in enumerate(slots):
+                    self.assertEqual(slot.appointment_id, booking.id)
+                    self.assertEqual(slot.stylist_id, booking.stylist_id)
+                    self.assertEqual(slot.workstation_id, booking.workstation_id)
+                    self.assertEqual(slot.slot_start, booking.starts_at + index * SLOT_LENGTH)
 
 
 # ---------------------------------------------------------------------------
