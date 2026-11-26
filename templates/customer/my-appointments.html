@@ -8,6 +8,10 @@
 <p role="status" class="notice" data-booked="{{ booked }}">Your appointment number {{ booked }} is confirmed.</p>
 {% endif %}
 
+{% if error %}
+<p class="error" role="alert" data-booking-error>{{ error }}</p>
+{% endif %}
+
 {% if appointments %}
 <table class="grid" data-appointment-count="{{ appointments|length }}">
     <thead>
@@ -37,16 +41,15 @@
             <td class="price">{{ appointment.price }}</td>
             <td><span class="status status-{{ appointment.status }}">{{ appointment.status|replace('_', ' ') }}</span></td>
             <td class="actions">
-                {#
-                  C-4 adds the real forms here once Role A's booking functions
-                  exist.  The two flags above are already computed on the
-                  server, so the buttons only need to render when they are true.
-                #}
-                {% if appointment.can_cancel %}
-                <span class="pending" data-pending="cancel">Cancel</span>
-                {% endif %}
                 {% if appointment.can_reschedule %}
-                <span class="pending" data-pending="reschedule">Change time</span>
+                <a class="button" href="{{ url_for('customer.reschedule_form', appointment_id=appointment.id) }}">Change time</a>
+                {% endif %}
+                {% if appointment.can_cancel %}
+                <form method="post" class="inline-form"
+                      action="{{ url_for('customer.cancel_appointment', appointment_id=appointment.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="button">Cancel</button>
+                </form>
                 {% endif %}
                 {% if not appointment.can_cancel and not appointment.can_reschedule %}
                 <span class="muted">&mdash;</span>

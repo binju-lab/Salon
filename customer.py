@@ -1,24 +1,25 @@
 """Customer-facing pages (Role C).
 
-Covers C-1 (public service catalogue) and C-2 (my appointments).  Both steps
-depend only on the B-0 baseline, so they do not wait for Role A.
-
-C-3 (the booking page with ``fetch /api/slots``) and C-4 (the three write
-routes) are added later, once Role A exposes its six functions.
+C-1 service catalogue, C-2 my appointments, C-3 booking form with a live
+``fetch /api/slots``, C-4 the three write routes.
 
 Only this module, ``templates/customer/*``, ``static/*`` and
 ``tests/test_customer.py`` are owned by Role C.  Nothing here edits the shared
-baseline files.
+baseline files, and no availability or transaction logic is duplicated here:
+every write goes through ``booking.py``.
 """
 
 from datetime import datetime, timedelta
 
-from flask import Blueprint, abort, render_template, request
+from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_login import current_user
 
+import booking
 from auth import roles_required
+from booking import BookingError, ValidationFailed
 from models import Appointment, Service, StaffService, User, db
 from money import price_from_minor
+from responses import json_error, wants_json
 
 customer = Blueprint("customer", __name__)
 
@@ -120,17 +121,14 @@ def service_detail(service_id):
 @roles_required("customer")
 def my_appointments():
     """C-2: the signed-in customer's own bookings, newest first."""
-    now = datetime.now()
-    appointments = (
-        db.session.query(Appointment)
-        .filter(Appointment.customer_id == current_user.id)
-        .order_by(Appointment.starts_at.desc())
-        .all()
-    )
-    return render_template(
-        "customer/my-appointments.html",
-        appointments=[_appointment_payload(row, now) for row in appointments],
-        booked=request.args.get("booked", type=int),
+    return (
+        render_template(
+            "customer/my-appointments.html",
+            appointments=_appointments_payload(),
+            booked=request.args.get("booked", type=int),
+            error=None,
+        ),
+        200,
     )
 
 
@@ -164,13 +162,178 @@ def book():
         abort(400)
 
     service, stylist = _require_bookable(service_id, stylist_id)
+    return _render_book(service, stylist)
 
-    today = datetime.now().date()
-    last_bookable_day = today + timedelta(days=BOOKING_WINDOW_DAYS)
+
+# ---------------------------------------------------------------------------
+# C-4: write routes
+# ---------------------------------------------------------------------------
+
+def _today():
+    return datetime.now().date()
+
+
+def _render_book(service, stylist, form_date=None, error=None):
+    """One place for the booking page, used by both GET and a failed POST."""
+    today = _today()
     return render_template(
         "customer/book.html",
         service=_service_payload(service),
         stylist={"id": stylist.id, "name": stylist.name},
         today=today.isoformat(),
-        last_bookable_day=last_bookable_day.isoformat(),
+        last_bookable_day=(today + timedelta(days=BOOKING_WINDOW_DAYS)).isoformat(),
+        form_date=form_date or today.isoformat(),
+        error=error,
     )
+
+
+def _appointments_payload():
+    now = datetime.now()
+    rows = (
+        db.session.query(Appointment)
+        .filter(Appointment.customer_id == current_user.id)
+        .order_by(Appointment.starts_at.desc())
+        .all()
+    )
+    return [_appointment_payload(row, now) for row in rows]
+
+
+def _render_appointments(error=None, status=200, booked=None):
+    return (
+        render_template(
+            "customer/my-appointments.html",
+            appointments=_appointments_payload(),
+            booked=booked,
+            error=error,
+        ),
+        status,
+    )
+
+
+def _error_message(exc):
+    return getattr(exc, "message", None) or str(exc)
+
+
+def _json_error(exc):
+    extra = {}
+    fields = getattr(exc, "fields", None)
+    if fields:
+        extra["fields"] = fields
+    return json_error(exc.error_code, _error_message(exc), exc.http_status, **extra)
+
+
+def _parse_date(value):
+    try:
+        return datetime.strptime((value or "").strip(), "%Y-%m-%d").date()
+    except ValueError:
+        raise ValidationFailed("date", "must be a YYYY-MM-DD date") from None
+
+
+def _parse_time(value):
+    try:
+        return datetime.strptime((value or "").strip(), "%H:%M").time()
+    except ValueError:
+        raise ValidationFailed("start", "must be an HH:MM time") from None
+
+
+@customer.post("/book")
+@roles_required("customer")
+def create_booking():
+    """C-4: create one booking through booking.create_appointment."""
+    service_id = request.form.get("service_id", type=int)
+    stylist_id = request.form.get("stylist_id", type=int)
+    if service_id is None or stylist_id is None:
+        abort(400)
+
+    service, stylist = _require_bookable(service_id, stylist_id)
+    raw_date = request.form.get("date", "")
+
+    try:
+        day = _parse_date(raw_date)
+        start = _parse_time(request.form.get("start"))
+        appointment = booking.create_appointment(
+            current_user.id, service.id, stylist.id, day, start
+        )
+    except BookingError as exc:
+        if wants_json():
+            return _json_error(exc)
+        # Keep the customer's choices; the page reloads its own slot list.
+        return _render_book(service, stylist, form_date=raw_date, error=_error_message(exc)), exc.http_status
+
+    return redirect(url_for("customer.my_appointments", booked=appointment.id), code=303)
+
+
+@customer.post("/appointments/<int:appointment_id>/cancel")
+@roles_required("customer")
+def cancel_appointment(appointment_id):
+    """C-4: cancel through booking.cancel; ownership and window are checked there."""
+    try:
+        booking.cancel(appointment_id)
+    except BookingError as exc:
+        if wants_json():
+            return _json_error(exc)
+        return _render_appointments(error=_error_message(exc), status=exc.http_status)
+
+    return redirect(url_for("customer.my_appointments"), code=303)
+
+
+@customer.get("/appointments/<int:appointment_id>/reschedule")
+@roles_required("customer")
+def reschedule_form(appointment_id):
+    """C-4: reschedule form. The slot list uses /api/slots in reschedule mode."""
+    appointment = db.session.get(Appointment, appointment_id)
+    if appointment is None:
+        abort(404)
+    if appointment.customer_id != current_user.id:
+        abort(403)
+    if appointment.status != "confirmed" or datetime.now() >= appointment.starts_at:
+        return _render_appointments(
+            error="That appointment can no longer be moved.", status=409
+        )
+
+    today = _today()
+    return render_template(
+        "customer/reschedule.html",
+        appointment=_appointment_payload(appointment, datetime.now()),
+        today=today.isoformat(),
+        last_bookable_day=(today + timedelta(days=BOOKING_WINDOW_DAYS)).isoformat(),
+        form_date=appointment.starts_at.strftime("%Y-%m-%d"),
+        error=None,
+    )
+
+
+@customer.post("/appointments/<int:appointment_id>/reschedule")
+@roles_required("customer")
+def reschedule_submit(appointment_id):
+    """C-4: move the appointment through booking.reschedule."""
+    appointment = db.session.get(Appointment, appointment_id)
+    if appointment is None:
+        abort(404)
+    if appointment.customer_id != current_user.id:
+        abort(403)
+
+    raw_date = request.form.get("date", "")
+    try:
+        day = _parse_date(raw_date)
+        start = _parse_time(request.form.get("start"))
+        booking.reschedule(appointment_id, day, start)
+    except BookingError as exc:
+        if wants_json():
+            return _json_error(exc)
+        if exc.error_code in {"INVALID_STATE", "CANCEL_WINDOW_CLOSED"}:
+            # The booking itself is unusable now; send the customer back to the list.
+            return _render_appointments(error=_error_message(exc), status=exc.http_status)
+        today = _today()
+        return (
+            render_template(
+                "customer/reschedule.html",
+                appointment=_appointment_payload(appointment, datetime.now()),
+                today=today.isoformat(),
+                last_bookable_day=(today + timedelta(days=BOOKING_WINDOW_DAYS)).isoformat(),
+                form_date=raw_date,
+                error=_error_message(exc),
+            ),
+            exc.http_status,
+        )
+
+    return redirect(url_for("customer.my_appointments"), code=303)

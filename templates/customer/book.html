@@ -17,14 +17,15 @@
     <dd>{{ stylist.name }}</dd>
 </dl>
 
-<form method="post" action="/book" id="booking-form" class="booking"
+{% if error %}
+<p class="error" role="alert" data-booking-error>{{ error }}</p>
+{% endif %}
+
+<form method="post" action="{{ url_for('customer.create_booking') }}" id="booking-form" class="booking"
       data-slots-url="/api/slots"
+      data-mode="create"
       data-service-id="{{ service.id }}"
       data-stylist-id="{{ stylist.id }}">
-    {#
-      The POST handler is added in C-4. Until then this form submits to an
-      endpoint that only accepts GET, so the browser gets a 405.
-    #}
     <input type="hidden" name="service_id" value="{{ service.id }}">
     <input type="hidden" name="stylist_id" value="{{ stylist.id }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -32,7 +33,7 @@
     <p>
         <label for="booking-date">Date</label>
         <input type="date" id="booking-date" name="date"
-               value="{{ today }}" min="{{ today }}" max="{{ last_bookable_day }}" required>
+               value="{{ form_date }}" min="{{ today }}" max="{{ last_bookable_day }}" required>
     </p>
 
     <fieldset class="slots-fieldset">

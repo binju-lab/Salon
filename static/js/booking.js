@@ -7,8 +7,11 @@
     }
 
     var slotsUrl = form.dataset.slotsUrl;
+    var mode = form.dataset.mode;
     var serviceId = form.dataset.serviceId;
     var stylistId = form.dataset.stylistId;
+    var appointmentId = form.dataset.appointmentId;
+
     var dateInput = document.getElementById("booking-date");
     var statusEl = document.getElementById("slot-status");
     var listEl = document.getElementById("slot-list");
@@ -57,6 +60,19 @@
         });
     }
 
+    function queryFor(day) {
+        // The two modes are mutually exclusive, exactly as the contract states.
+        var params = new URLSearchParams();
+        if (mode === "reschedule") {
+            params.set("appointment_id", appointmentId);
+        } else {
+            params.set("service_id", serviceId);
+            params.set("stylist_id", stylistId);
+        }
+        params.set("date", day);
+        return slotsUrl + "?" + params.toString();
+    }
+
     function readJson(response) {
         return response.json().catch(function () {
             return null;
@@ -74,12 +90,7 @@
         resetSelection();
         setStatus("Loading times\u2026");
 
-        var url = slotsUrl +
-            "?service_id=" + encodeURIComponent(serviceId) +
-            "&stylist_id=" + encodeURIComponent(stylistId) +
-            "&date=" + encodeURIComponent(day);
-
-        fetch(url, { headers: { Accept: "application/json" } })
+        fetch(queryFor(day), { headers: { Accept: "application/json" } })
             .then(readJson)
             .then(function (result) {
                 var payload = result.payload || {};

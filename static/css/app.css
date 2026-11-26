@@ -176,6 +176,18 @@ h2 {
     background: #e3f2e9;
 }
 
+.error {
+    padding: .6rem .8rem;
+    border-left: 4px solid #b42318;
+    background: #fdeceb;
+    color: #7a1a12;
+}
+
+.inline-form {
+    display: inline;
+    margin: 0;
+}
+
 .empty {
     padding: 1.2rem;
     background: var(--surface);

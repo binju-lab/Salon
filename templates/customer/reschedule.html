@@ -1,0 +1,53 @@
+{% extends "customer/layout.html" %}
+{% block title %}Change time · Hair Salon{% endblock %}
+
+{% block customer_content %}
+<p><a href="{{ url_for('customer.my_appointments') }}">&larr; My appointments</a></p>
+
+<h1>Change the time</h1>
+
+<dl class="facts">
+    <dt>Service</dt>
+    <dd>{{ appointment.service_name }}, until {{ appointment.ends_at[11:] }}</dd>
+
+    <dt>Stylist</dt>
+    <dd>{{ appointment.stylist_name }}</dd>
+
+    <dt>Currently</dt>
+    <dd>{{ appointment.starts_at }}</dd>
+
+    <dt>Price</dt>
+    <dd class="price">{{ appointment.price }}, unchanged by the move</dd>
+</dl>
+
+{% if error %}
+<p class="error" role="alert" data-booking-error>{{ error }}</p>
+{% endif %}
+
+<form method="post" action="{{ url_for('customer.reschedule_submit', appointment_id=appointment.id) }}"
+      id="booking-form" class="booking"
+      data-slots-url="/api/slots"
+      data-mode="reschedule"
+      data-appointment-id="{{ appointment.id }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <p>
+        <label for="booking-date">New date</label>
+        <input type="date" id="booking-date" name="date"
+               value="{{ form_date }}" min="{{ today }}" max="{{ last_bookable_day }}" required>
+    </p>
+
+    <fieldset class="slots-fieldset">
+        <legend>Available times</legend>
+        <p id="slot-status" class="muted" role="status">Loading times&hellip;</p>
+        <div id="slot-list" class="slots" aria-live="polite"></div>
+        <input type="hidden" id="booking-start" name="start" value="" required>
+    </fieldset>
+
+    <button type="submit" id="booking-submit" class="button primary" disabled>Move appointment</button>
+</form>
+{% endblock %}
+
+{% block customer_scripts %}
+<script src="{{ url_for('static', filename='js/booking.js') }}" defer></script>
+{% endblock %}

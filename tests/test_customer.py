@@ -9,10 +9,19 @@ application instead of adding the blueprint themselves.
 
 import re
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 
 from app import create_app
-from models import Appointment, Service, StaffService, User, Workstation, db
+from models import (
+    Appointment,
+    Service,
+    SlotAllocation,
+    StaffService,
+    User,
+    WorkingShift,
+    Workstation,
+    db,
+)
 
 PASSWORD = "Passw0rd!"
 
@@ -72,6 +81,18 @@ class CustomerPagesTest(unittest.TestCase):
         self.chair = Workstation(label="Chair 1", workstation_type="chair")
         db.session.add_all([self.haircut, self.colouring, self.chair])
         db.session.flush()
+
+        # C-4 needs a day the stylist actually works on.  Three days out keeps
+        # the fixture clear of the appointments created immediately below.
+        self.booking_day = (now + timedelta(days=3)).date()
+        db.session.add(
+            WorkingShift(
+                stylist=self.stylist,
+                work_date=self.booking_day,
+                start_time=time(9),
+                end_time=time(17),
+            )
+        )
 
         # Only the qualified stylist is linked to the haircut; the retired one
         # is linked too but must be filtered out because it is inactive.
@@ -309,6 +330,210 @@ class CustomerPagesTest(unittest.TestCase):
         body = self.client.get(f"/services/{self.haircut.id}").get_data(as_text=True)
         self.assertIn(
             f"/book?service_id={self.haircut.id}&amp;stylist_id={self.stylist.id}", body
+        )
+
+    # ------------------------------------------------------------------- C-4
+
+    def _post_booking(self, date_value, start_value, stylist_id=None):
+        return self.client.post(
+            "/book",
+            data={
+                "service_id": str(self.haircut.id),
+                "stylist_id": str(stylist_id or self.stylist.id),
+                "date": date_value,
+                "start": start_value,
+            },
+        )
+
+    def _appointment(self, appointment_id):
+        return db.session.get(Appointment, appointment_id)
+
+    def test_booking_is_created_and_frozen_at_the_quoted_price(self):
+        self._login("alice@example.com")
+        response = self._post_booking(self.booking_day.isoformat(), "09:00")
+
+        self.assertEqual(response.status_code, 303)
+        created = (
+            db.session.query(Appointment)
+            .filter_by(customer_id=self.alice.id, status="confirmed")
+            .order_by(Appointment.id.desc())
+            .first()
+        )
+        self.assertIsNotNone(created)
+        self.assertIn(f"/my-appointments?booked={created.id}", response.headers["Location"])
+        self.assertEqual(created.agreed_price_minor, 2500)
+        self.assertEqual(created.ends_at - created.starts_at, timedelta(minutes=30))
+        # A 30-minute service reserves two 15-minute cells.
+        cells = db.session.query(SlotAllocation).filter_by(appointment_id=created.id).count()
+        self.assertEqual(cells, 2)
+
+    def test_a_taken_slot_returns_409_and_creates_no_second_booking(self):
+        self._login("alice@example.com")
+        self.assertEqual(self._post_booking(self.booking_day.isoformat(), "09:00").status_code, 303)
+
+        before = db.session.query(Appointment).filter_by(status="confirmed").count()
+        response = self._post_booking(self.booking_day.isoformat(), "09:00")
+        after = db.session.query(Appointment).filter_by(status="confirmed").count()
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("data-booking-error", response.get_data(as_text=True))
+        self.assertEqual(before, after)
+
+    def test_a_json_caller_gets_the_stable_error_code(self):
+        self._login("alice@example.com")
+        self._post_booking(self.booking_day.isoformat(), "09:00")
+        response = self.client.post(
+            "/book",
+            data={
+                "service_id": str(self.haircut.id),
+                "stylist_id": str(self.stylist.id),
+                "date": self.booking_day.isoformat(),
+                "start": "09:00",
+            },
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.get_json()["error"], "SLOT_TAKEN")
+
+    def test_a_malformed_date_is_rejected_before_anything_is_saved(self):
+        self._login("alice@example.com")
+        response = self._post_booking("2026-13-40", "09:00")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("data-booking-error", response.get_data(as_text=True))
+
+    def test_a_start_off_the_quarter_hour_is_rejected(self):
+        self._login("alice@example.com")
+        response = self._post_booking(self.booking_day.isoformat(), "09:10")
+        self.assertEqual(response.status_code, 400)
+
+    def test_a_date_beyond_the_window_returns_date_out_of_range(self):
+        self._login("alice@example.com")
+        too_far = (datetime.now().date() + timedelta(days=61)).isoformat()
+        response = self.client.post(
+            "/book",
+            data={
+                "service_id": str(self.haircut.id),
+                "stylist_id": str(self.stylist.id),
+                "date": too_far,
+                "start": "09:00",
+            },
+            headers={"Accept": "application/json"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["error"], "DATE_OUT_OF_RANGE")
+
+    def test_another_customer_cannot_take_the_same_slot(self):
+        self._login("alice@example.com")
+        self._post_booking(self.booking_day.isoformat(), "09:00")
+        self.client.post("/auth/logout")
+        self._login("bob@example.com")
+
+        self.assertEqual(self._post_booking(self.booking_day.isoformat(), "09:00").status_code, 409)
+
+    def test_cancel_releases_the_slot_and_keeps_the_record(self):
+        self._login("alice@example.com")
+        self._post_booking(self.booking_day.isoformat(), "09:00")
+        created = (
+            db.session.query(Appointment)
+            .filter_by(customer_id=self.alice.id)
+            .order_by(Appointment.id.desc())
+            .first()
+        )
+
+        response = self.client.post(f"/appointments/{created.id}/cancel")
+        self.assertEqual(response.status_code, 303)
+
+        db.session.expire_all()
+        self.assertEqual(self._appointment(created.id).status, "cancelled")
+        self.assertEqual(
+            db.session.query(SlotAllocation).filter_by(appointment_id=created.id).count(), 0
+        )
+
+    def test_cancel_inside_the_two_hour_window_is_refused(self):
+        self._login("alice@example.com")
+        response = self.client.post(f"/appointments/{self.soon.id}/cancel")
+        self.assertEqual(response.status_code, 409)
+        body = response.get_data(as_text=True)
+        self.assertIn("data-booking-error", body)
+        self.assertEqual(self._appointment(self.soon.id).status, "confirmed")
+
+    def test_cancel_twice_reports_invalid_state(self):
+        self._login("alice@example.com")
+        self.client.post(f"/appointments/{self.far_future.id}/cancel")
+        response = self.client.post(f"/appointments/{self.far_future.id}/cancel")
+        self.assertEqual(response.status_code, 409)
+
+    def test_cancel_of_someone_elses_appointment_is_forbidden(self):
+        self._login("alice@example.com")
+        self.assertEqual(
+            self.client.post(f"/appointments/{self.someone_elses.id}/cancel").status_code, 403
+        )
+        self.assertEqual(self._appointment(self.someone_elses.id).status, "confirmed")
+
+    def test_reschedule_form_uses_the_reschedule_slot_mode(self):
+        self._login("alice@example.com")
+        response = self.client.get(f"/appointments/{self.far_future.id}/reschedule")
+        body = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('data-mode="reschedule"', body)
+        self.assertIn(f'data-appointment-id="{self.far_future.id}"', body)
+
+    def test_reschedule_moves_the_booking_and_keeps_price_and_duration(self):
+        self._login("alice@example.com")
+        original = self._appointment(self.far_future.id)
+        price, span = original.agreed_price_minor, original.ends_at - original.starts_at
+
+        response = self.client.post(
+            f"/appointments/{self.far_future.id}/reschedule",
+            data={"date": self.booking_day.isoformat(), "start": "11:00"},
+        )
+        self.assertEqual(response.status_code, 303)
+
+        db.session.expire_all()
+        moved = self._appointment(self.far_future.id)
+        self.assertEqual(moved.starts_at.time(), time(11, 0))
+        self.assertEqual(moved.agreed_price_minor, price)
+        self.assertEqual(moved.ends_at - moved.starts_at, span)
+
+    def test_reschedule_onto_a_taken_slot_keeps_the_original_intact(self):
+        self._login("alice@example.com")
+        self._post_booking(self.booking_day.isoformat(), "09:00")
+        before = self._appointment(self.far_future.id)
+        original_start = before.starts_at
+
+        response = self.client.post(
+            f"/appointments/{self.far_future.id}/reschedule",
+            data={"date": self.booking_day.isoformat(), "start": "09:00"},
+        )
+        self.assertEqual(response.status_code, 409)
+
+        db.session.expire_all()
+        after = self._appointment(self.far_future.id)
+        self.assertEqual(after.starts_at, original_start)
+        self.assertEqual(after.status, "confirmed")
+
+    def test_reschedule_is_refused_once_the_appointment_has_started(self):
+        self._login("alice@example.com")
+        response = self.client.get(f"/appointments/{self.past.id}/reschedule")
+        self.assertEqual(response.status_code, 409)
+
+    def test_writes_require_a_customer_session(self):
+        payload = {
+            "service_id": str(self.haircut.id),
+            "stylist_id": str(self.stylist.id),
+            "date": self.booking_day.isoformat(),
+            "start": "09:00",
+        }
+        self.assertEqual(self.client.post("/book", data=payload).status_code, 302)
+        self.assertEqual(
+            self.client.post(f"/appointments/{self.far_future.id}/cancel").status_code, 302
+        )
+        self.assertEqual(
+            self.client.post(
+                f"/appointments/{self.far_future.id}/reschedule",
+                data={"date": self.booking_day.isoformat(), "start": "11:00"},
+            ).status_code,
+            302,
         )
 
 
