@@ -10,32 +10,36 @@
     <p class="lede">{{ service.description }}</p>
 </div>
 
-<div class="card card--pad" style="max-width: 34rem;">
-    <dl class="facts">
-        <dt>Duration</dt>
-        <dd data-duration="{{ service.duration_minutes }}">{{ service.duration_minutes }} minutes</dd>
+<div class="split">
+    <div class="card card--pad">
+        <dl class="facts">
+            <dt>Duration</dt>
+            <dd data-duration="{{ service.duration_minutes }}">{{ service.duration_minutes }} minutes</dd>
 
-        <dt>Price</dt>
-        <dd><span class="price price--lg" data-price="{{ service.price }}">{{ service.price }}</span></dd>
+            <dt>Price</dt>
+            <dd><span class="price price--lg" data-price="{{ service.price }}">{{ service.price }}</span></dd>
 
-        <dt>Needs</dt>
-        <dd data-workstation-type="{{ service.required_workstation_type }}">
-            {{ 'A colouring station' if service.required_workstation_type == 'colour' else 'A standard chair' }}</dd>
-    </dl>
+            <dt>Needs</dt>
+            <dd data-workstation-type="{{ service.required_workstation_type }}">
+                {{ 'A colouring station' if service.required_workstation_type == 'colour' else 'A standard chair' }}</dd>
+        </dl>
+    </div>
+
+    <div>
+        <h2>Choose a stylist</h2>
+        {% if stylists %}
+        <ul class="stylist-list" data-stylist-count="{{ stylists|length }}">
+            {% for stylist in stylists %}
+            <li class="stylist-chip" data-stylist-id="{{ stylist.id }}">
+                <span>{{ stylist.name }}</span>
+                <a class="btn btn--primary btn--sm"
+                   href="{{ url_for('customer.book', service_id=service.id, stylist_id=stylist.id) }}">Choose a time</a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty">No stylist is currently available for this service.</div>
+        {% endif %}
+    </div>
 </div>
-
-<h2>Choose a stylist</h2>
-{% if stylists %}
-<ul class="stylist-list" data-stylist-count="{{ stylists|length }}">
-    {% for stylist in stylists %}
-    <li class="stylist-chip" data-stylist-id="{{ stylist.id }}">
-        <span>{{ stylist.name }}</span>
-        <a class="btn btn--primary btn--sm"
-           href="{{ url_for('customer.book', service_id=service.id, stylist_id=stylist.id) }}">Choose a time</a>
-    </li>
-    {% endfor %}
-</ul>
-{% else %}
-<div class="empty">No stylist is currently available for this service.</div>
-{% endif %}
 {% endblock %}

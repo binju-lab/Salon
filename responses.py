@@ -95,10 +95,9 @@ def register_error_handlers(app):
                 409: "The request conflicts with the current state.",
             }
             return json_error(code, messages.get(error.code, "The request failed."), error.code)
-        # Preserve Flask's normal HTML error pages and status codes for the
-        # existing browser interface.  Business modules may provide their own
-        # friendlier HTML rendering without changing this JSON contract.
-        return error
+        # Browser requests get the shared styled error page so a 404 or 403 does
+        # not fall back to Flask's bare default. The status code is unchanged.
+        return render_template("errors/error.html", status=error.code), error.code
 
     @app.errorhandler(500)
     def handle_internal_error(_error):

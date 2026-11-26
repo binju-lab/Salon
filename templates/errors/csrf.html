@@ -1,8 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Request expired | Hair Salon{% endblock %}
+{% block title %}Request expired · Hair Salon{% endblock %}
 {% block content %}
-    <h1>Please review your form</h1>
-    <p>The security token is missing, invalid, or expired. Return to the form, review your entries, and try again.</p>
-    <p>For your security, passwords must be entered again. No booking or account change was saved by this request.</p>
-    <p><a href="{{ url_for('index') }}">Return to the home page</a></p>
+<div class="error-page">
+    <p class="error-page__code">Error 400</p>
+    <h1>The form expired</h1>
+    <p>
+        The security token for this form was missing or out of date, so nothing was saved.
+        Go back to the form, enter your password again, and submit it once more.
+    </p>
+    <a class="btn btn--primary" href="{{ url_for('index') }}">Back to the home page</a>
+    <a class="btn" href="{{ url_for('auth.login') }}">Sign in again</a>
+</div>
 {% endblock %}

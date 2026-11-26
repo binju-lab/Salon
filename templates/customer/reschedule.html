@@ -14,8 +14,8 @@
 <div class="alert alert--error" role="alert" data-booking-error>{{ error }}</div>
 {% endif %}
 
-<div class="row" style="align-items: flex-start; gap: 2.5rem;">
-    <div class="card card--pad" style="flex: 1 1 20rem; max-width: 26rem;">
+<div class="split">
+    <div class="card card--pad">
         <dl class="facts">
             <dt>Service</dt>
             <dd>{{ appointment.service_name }}</dd>
@@ -38,7 +38,6 @@
 
     <form method="post" action="{{ url_for('customer.reschedule_submit', appointment_id=appointment.id) }}"
           id="booking-form" class="card card--pad stack"
-          style="flex: 1 1 26rem;"
           data-slots-url="/api/slots"
           data-mode="reschedule"
           data-appointment-id="{{ appointment.id }}">

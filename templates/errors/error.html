@@ -1,7 +1,30 @@
 {% extends "base.html" %}
-{% block title %}Server error | Hair Salon{% endblock %}
+{% set code = status or 500 %}
+{% set titles = {
+    '400': 'That request did not make sense',
+    '403': 'You cannot open this page',
+    '404': 'Page not found',
+    '405': 'That action is not allowed here',
+    '409': 'That conflicts with the current state',
+    '500': 'Something went wrong'
+} %}
+{% set bodies = {
+    '400': 'Some part of the request was missing or invalid. Go back, check the details and try again.',
+    '403': 'Your account does not have permission for this action. If you think that is wrong, sign in with the right account.',
+    '404': 'The page or record you asked for does not exist, or it is no longer available to you.',
+    '405': 'This address does not accept that kind of request. Follow a link or button instead.',
+    '409': 'The record changed while you were working on it. Reload the page to see the current state.',
+    '500': 'The server could not complete the request. Nothing was saved. Try again in a moment.'
+} %}
+{% block title %}{{ code }} · Hair Salon{% endblock %}
 {% block content %}
-    <h1>Something went wrong</h1>
-    <p>The server could not complete the request. Please try again later.</p>
-    <p><a href="{{ url_for('index') }}">Return to the home page</a></p>
+<div class="error-page">
+    <p class="error-page__code">Error {{ code }}</p>
+    <h1>{{ titles.get(code|string, 'Something went wrong') }}</h1>
+    <p>{{ bodies.get(code|string, 'The request could not be completed.') }}</p>
+    <a class="btn btn--primary" href="{{ url_for('index') }}">Back to the home page</a>
+    {% if current_user.is_authenticated and current_user.role == 'customer' %}
+        <a class="btn" href="{{ url_for('customer.my_appointments') }}">My appointments</a>
+    {% endif %}
+</div>
 {% endblock %}
