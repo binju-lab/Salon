@@ -54,7 +54,7 @@ A database seeded before the password became fixed keeps its old random password
 .\.venv\Scripts\python.exe -m unittest discover -s tests
 ```
 
-Expect `Ran 126 tests ... OK`. Breakdown: `test_auth.py` 9, `test_contracts.py` 9, `test_booking_rules.py` 68, `test_customer.py` 40. Any other number means the baseline is broken; repair it before adding features.
+Expect `Ran 136 tests ... OK`. Breakdown: `test_auth.py` 9, `test_contracts.py` 9, `test_booking_rules.py` 68, `test_customer.py` 50. Any other number means the baseline is broken; repair it before adding features.
 
 ## File ownership
 

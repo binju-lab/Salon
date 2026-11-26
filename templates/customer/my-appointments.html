@@ -28,6 +28,10 @@
     <tbody>
         {% for appointment in appointments %}
         <tr data-appointment-id="{{ appointment.id }}"
+            data-customer-id="{{ appointment.customer_id }}"
+            data-stylist-id="{{ appointment.stylist_id }}"
+            data-service-id="{{ appointment.service_id }}"
+            data-workstation-id="{{ appointment.workstation_id }}"
             data-status="{{ appointment.status }}"
             data-can-cancel="{{ 'true' if appointment.can_cancel else 'false' }}"
             data-can-reschedule="{{ 'true' if appointment.can_reschedule else 'false' }}">

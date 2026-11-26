@@ -69,12 +69,20 @@ def _qualified_stylists(service_id):
 
 
 def _appointment_payload(appointment, now):
-    """One row for the customer list, with the two server-computed flags."""
+    """One row for the customer list, with the two server-computed flags.
+
+    Field names follow spec section 5.2 exactly, including the raw ids.
+    """
     confirmed = appointment.status == "confirmed"
     return {
         "id": appointment.id,
-        "service_name": appointment.service.name,
+        "customer_id": appointment.customer_id,
+        "customer_name": appointment.customer.name,
+        "stylist_id": appointment.stylist_id,
         "stylist_name": appointment.stylist.name,
+        "service_id": appointment.service_id,
+        "service_name": appointment.service.name,
+        "workstation_id": appointment.workstation_id,
         "workstation_label": appointment.workstation.label,
         "starts_at": _format_datetime(appointment.starts_at),
         "ends_at": _format_datetime(appointment.ends_at),

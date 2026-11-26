@@ -12,6 +12,7 @@
             <th scope="col">Service</th>
             <th scope="col">Duration</th>
             <th scope="col">Price</th>
+            <th scope="col">Needs</th>
             <th scope="col"><span class="sr-only">Details</span></th>
         </tr>
     </thead>
@@ -24,6 +25,9 @@
             </td>
             <td>{{ service.duration_minutes }} min</td>
             <td class="price">{{ service.price }}</td>
+            <td data-workstation-type="{{ service.required_workstation_type }}">
+                {{ 'Colouring station' if service.required_workstation_type == 'colour' else 'Chair' }}
+            </td>
             <td><a class="button" href="{{ url_for('customer.service_detail', service_id=service.id) }}">View</a></td>
         </tr>
         {% endfor %}

@@ -83,15 +83,25 @@ class CustomerPagesTest(unittest.TestCase):
         db.session.flush()
 
         # C-4 needs a day the stylist actually works on.  Three days out keeps
-        # the fixture clear of the appointments created immediately below.
+        # the fixture clear of the appointments created immediately below, and
+        # the last day of the booking window exercises the inclusive boundary.
         self.booking_day = (now + timedelta(days=3)).date()
-        db.session.add(
-            WorkingShift(
-                stylist=self.stylist,
-                work_date=self.booking_day,
-                start_time=time(9),
-                end_time=time(17),
-            )
+        self.last_bookable_day = (now + timedelta(days=60)).date()
+        db.session.add_all(
+            [
+                WorkingShift(
+                    stylist=self.stylist,
+                    work_date=self.booking_day,
+                    start_time=time(9),
+                    end_time=time(17),
+                ),
+                WorkingShift(
+                    stylist=self.stylist,
+                    work_date=self.last_bookable_day,
+                    start_time=time(9),
+                    end_time=time(17),
+                ),
+            ]
         )
 
         # Only the qualified stylist is linked to the haircut; the retired one
@@ -135,6 +145,14 @@ class CustomerPagesTest(unittest.TestCase):
     def _row(self, html, appointment_id):
         match = re.search(
             r'<tr[^>]*data-appointment-id="%d"[^>]*>' % appointment_id, html
+        )
+        self.assertIsNotNone(match, "appointment %d missing from the page" % appointment_id)
+        return match.group(0)
+
+    def _row_block(self, html, appointment_id):
+        """The whole <tr> element, so cell contents can be asserted too."""
+        match = re.search(
+            r'<tr[^>]*data-appointment-id="%d".*?</tr>' % appointment_id, html, re.S
         )
         self.assertIsNotNone(match, "appointment %d missing from the page" % appointment_id)
         return match.group(0)
@@ -535,6 +553,130 @@ class CustomerPagesTest(unittest.TestCase):
             ).status_code,
             302,
         )
+
+    # ------------------------------------- acceptance checks V-01, V-03, V-15,
+    #                                       V-24, V-28, V-39, V-41 and forgery
+
+    def test_v01_anonymous_visitor_is_sent_to_login_with_next(self):
+        response = self.client.get(
+            f"/book?service_id={self.haircut.id}&stylist_id={self.stylist.id}"
+        )
+        self.assertEqual(response.status_code, 302)
+        location = response.headers["Location"]
+        self.assertIn("/auth/login", location)
+        self.assertIn("next=", location)
+
+    def test_v03_a_write_without_a_csrf_token_is_rejected(self):
+        self._login("alice@example.com")
+        self.app.config["WTF_CSRF_ENABLED"] = True
+        try:
+            response = self.client.post(f"/appointments/{self.far_future.id}/cancel")
+        finally:
+            self.app.config["WTF_CSRF_ENABLED"] = False
+        self.assertEqual(response.status_code, 400)
+        db.session.expire_all()
+        self.assertEqual(self._appointment(self.far_future.id).status, "confirmed")
+
+    def test_v15_a_start_in_the_past_is_rejected(self):
+        self._login("alice@example.com")
+        yesterday = (datetime.now().date() - timedelta(days=1)).isoformat()
+        self.assertEqual(self._post_booking(yesterday, "09:00").status_code, 400)
+
+    def test_v24_cancelling_puts_the_slot_back_on_the_slots_endpoint(self):
+        self._login("alice@example.com")
+        day = self.booking_day.isoformat()
+        self.assertEqual(self._post_booking(day, "09:00").status_code, 303)
+
+        def slots():
+            response = self.client.get(
+                f"/api/slots?service_id={self.haircut.id}&stylist_id={self.stylist.id}&date={day}",
+                headers={"Accept": "application/json"},
+            )
+            return response.get_json()["slots"]
+
+        self.assertNotIn("09:00", slots())
+        created = (
+            db.session.query(Appointment)
+            .filter_by(customer_id=self.alice.id)
+            .order_by(Appointment.id.desc())
+            .first()
+        )
+        self.client.post(f"/appointments/{created.id}/cancel")
+        self.assertIn("09:00", slots())
+
+    def test_v28_a_price_change_does_not_rewrite_an_existing_booking(self):
+        self._login("alice@example.com")
+        self._post_booking(self.booking_day.isoformat(), "09:00")
+        created = (
+            db.session.query(Appointment)
+            .filter_by(customer_id=self.alice.id)
+            .order_by(Appointment.id.desc())
+            .first()
+        )
+        self.haircut.price_minor = 9900
+        db.session.commit()
+
+        body = self.client.get("/my-appointments").get_data(as_text=True)
+        row = self._row_block(body, created.id)
+        self.assertIn("25.00", row)
+        self.assertNotIn("99.00", row)
+
+    def test_v39_rescheduling_inside_the_two_hour_window_is_still_allowed(self):
+        self._login("alice@example.com")
+        response = self.client.post(
+            f"/appointments/{self.soon.id}/reschedule",
+            data={"date": self.booking_day.isoformat(), "start": "11:00"},
+        )
+        self.assertEqual(response.status_code, 303)
+        db.session.expire_all()
+        self.assertEqual(self._appointment(self.soon.id).starts_at.time(), time(11, 0))
+
+    def test_v41_the_last_day_of_the_booking_window_is_accepted(self):
+        self._login("alice@example.com")
+        response = self._post_booking(self.last_bookable_day.isoformat(), "09:00")
+        self.assertEqual(response.status_code, 303)
+
+    def test_forged_fields_never_reach_the_booking(self):
+        self._login("alice@example.com")
+        self.client.post(
+            "/book",
+            data={
+                "service_id": str(self.haircut.id),
+                "stylist_id": str(self.stylist.id),
+                "date": self.booking_day.isoformat(),
+                "start": "09:00",
+                # All of the below are decided by the server and must be ignored.
+                "customer_id": str(self.bob.id),
+                "price": "0.01",
+                "ends_at": "1999-01-01T00:00",
+                "workstation_id": "999",
+                "status": "cancelled",
+            },
+        )
+        created = (
+            db.session.query(Appointment)
+            .order_by(Appointment.id.desc())
+            .first()
+        )
+        self.assertEqual(created.customer_id, self.alice.id)
+        self.assertEqual(created.agreed_price_minor, 2500)
+        self.assertEqual(created.status, "confirmed")
+        self.assertEqual(created.workstation_id, self.chair.id)
+        self.assertEqual(created.ends_at - created.starts_at, timedelta(minutes=30))
+
+    def test_service_list_reports_the_required_workstation_type(self):
+        body = self.client.get("/services").get_data(as_text=True)
+        self.assertIn('data-workstation-type="chair"', body)
+        self.assertIn("Chair", body)
+
+    def test_my_appointments_expose_the_contract_ids(self):
+        self._login("alice@example.com")
+        body = self.client.get("/my-appointments").get_data(as_text=True)
+        row = self._row(body, self.far_future.id)
+        self.assertIn(f'data-customer-id="{self.alice.id}"', row)
+        self.assertIn(f'data-stylist-id="{self.stylist.id}"', row)
+        self.assertIn(f'data-service-id="{self.haircut.id}"', row)
+        self.assertIn(f'data-workstation-id="{self.chair.id}"', row)
 
 
 if __name__ == "__main__":
