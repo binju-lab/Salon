@@ -8,7 +8,7 @@ from flask_wtf.csrf import CSRFProtect
 
 from auth import auth
 from availability import slots_api  # A 交付：/api/slots
-from customer import customer  # C 交付
+from customer import customer, landing_payload  # C 交付
 # from staff import staff  # D 交付
 # from admin import admin  # D 交付
 from models import User, db
@@ -56,6 +56,7 @@ def create_app(test_config=None):
 
     @app.get("/")
     def index():
-        return render_template("auth/demo.html")
+        # The landing page reads the live menu and stylist list from Role C.
+        return render_template("auth/demo.html", **landing_payload())
 
     return app

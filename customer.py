@@ -78,6 +78,26 @@ def _qualified_stylists(service_id):
     )
 
 
+def landing_payload():
+    """Everything the public home page needs, so it never shows stale copy."""
+    services = (
+        db.session.query(Service)
+        .filter(Service.is_active.is_(True))
+        .order_by(Service.name)
+        .all()
+    )
+    stylists = (
+        db.session.query(User)
+        .filter(User.role == "stylist", User.is_active.is_(True))
+        .order_by(User.name)
+        .all()
+    )
+    return {
+        "services": [_service_payload(service) for service in services],
+        "stylists": stylists,
+    }
+
+
 def _appointment_payload(appointment, now):
     """One row for the customer list, with the two server-computed flags.
 

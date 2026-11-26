@@ -9,7 +9,7 @@
 </div>
 
 {% if services %}
-<ul class="service-grid" data-service-count="{{ services|length }}">
+<ul class="service-grid service-grid--fill" data-service-count="{{ services|length }}">
     {% for service in services %}
     <li class="service-card" data-service-id="{{ service.id }}">
         <div class="service-card__head">

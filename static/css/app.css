@@ -123,10 +123,14 @@ body {
 }
 
 .site-nav a {
-    padding: .45rem .7rem;
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: .3rem .7rem;
     border-radius: var(--radius-sm);
     color: var(--ink-soft);
-    font-size: .94rem;
+    font: 600 1.15rem/1 var(--serif);
+    letter-spacing: .01em;
     text-decoration: none;
 }
 
@@ -642,6 +646,11 @@ form.stack .field:last-of-type {
     list-style: none;
 }
 
+/* On the landing page let a short menu stretch instead of leaving a hole. */
+.service-grid--fill {
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+}
+
 .service-card {
     display: flex;
     flex-direction: column;
@@ -844,9 +853,7 @@ textarea:focus-visible,
 .hero {
     max-width: 46rem;
     padding: 2rem 0 2.6rem;
-}
-
-.hero h1 {
+}.hero h1 {
     font-size: clamp(2rem, 1.3rem + 2.4vw, 3rem);
     line-height: 1.1;
 }
@@ -861,6 +868,143 @@ textarea:focus-visible,
     flex-wrap: wrap;
     gap: .7rem;
     margin-top: 1.9rem;
+}
+
+/* ------------------------------------------------------- public landing page */
+
+.hero-split {
+    display: grid;
+    gap: 2.5rem;
+    grid-template-columns: minmax(0, 1.15fr) minmax(16rem, .85fr);
+    align-items: start;
+    padding: 1.6rem 0 1rem;
+}
+
+.hero-split h1 {
+    margin: 0;
+    font-size: clamp(2rem, 1.2rem + 2.6vw, 3.05rem);
+    line-height: 1.08;
+}
+
+.hero-split .lede {
+    margin-top: 1rem;
+    font-size: 1.06rem;
+}
+
+.info-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem 1.7rem;
+    margin: 1.9rem 0 0;
+    padding: 1rem 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    font-size: .9rem;
+}
+
+.info-strip__item {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.info-strip__item::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.hours-card {
+    padding: 1.4rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.hours-card h2 {
+    margin: 0 0 .9rem;
+    font: 600 1.02rem/1.3 var(--sans);
+}
+
+.hours-list {
+    display: grid;
+    gap: .45rem;
+    margin: 0;
+    font-size: .94rem;
+}
+
+.hours-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: .45rem;
+    border-bottom: 1px dashed var(--line);
+}
+
+.hours-row:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.hours-row dt {
+    color: var(--muted);
+}
+
+.hours-row dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}
+
+.hours-card__note {
+    margin: .95rem 0 0;
+    color: var(--muted);
+    font-size: .86rem;
+}
+
+.section {
+    margin-top: 3.4rem;
+}
+
+.section__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+}
+
+.section__head h2 {
+    margin: 0;
+    font-size: 1.45rem;
+}
+
+.policy-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.policy {
+    padding: 1.15rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+
+.policy h3 {
+    margin: 0 0 .35rem;
+    font: 600 .98rem/1.3 var(--sans);
+}
+
+.policy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: .9rem;
 }
 
 .panel-grid {
