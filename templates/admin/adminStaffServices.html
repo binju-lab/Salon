@@ -1,0 +1,41 @@
+{% extends "admin/baseAdmin.html" %}
+
+<!--  Role D: Ruizhe Zheng 24107708 -->
+<!-- 管理：员工-服务页面 -->
+
+{% block admin_service %}
+<div class="admin_service">
+    <div class="admin_service_head">
+        <p class="font_subtopic">Current Staff-Services:</p>
+        <button> add a staff-service </button>
+    </div>
+    <div id="staff_service_table">
+        <table>
+            <thead>
+                <tr>
+                    <th class="font_text">stylist id</th>
+                    <th class="font_text">stylist name</th>
+                    <th class="font_text">service id</th>
+                    <th class="font_text">service name</th>
+                    <th class="font_text">operation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in staff_services %}
+                <tr data-id="{{ item.stylist_id }}-{{ item.service_id }}">
+                    <td class="font_text">{{ item.stylist_id }}</td>
+                    <td class="font_text">{{ item.stylist.name }}</td>
+                    <td class="font_text">{{ item.service_id }}</td>
+                    <td class="font_text">{{ item.service.name }}</td>
+                    <td class="font_text"><button> delete </button></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td class="font_text" colspan="4">No staff service record</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

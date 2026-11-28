@@ -1,0 +1,47 @@
+{% extends "admin/baseAdmin.html" %}
+
+<!--  Role D: Ruizhe Zheng 24107708 -->
+<!-- 管理：总览（appointments）页面 -->
+
+{% block admin_service %}
+<div class="table_outline" id="appointment_table">
+    <table>
+        <thead>
+            <tr>
+                <th class="font_text">id</th>
+                <th class="font_text">customer</th>
+                <th class="font_text">stylist</th>
+                <th class="font_text">service</th>
+                <th class="font_text">workstation</th>
+                <th class="font_text">time</th>
+                <th class="font_text">price</th>
+                <th class="font_text">state</th>
+                <th class="font_text">arrived at</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for appointment in appointments %}
+            <tr data-id="{{ appointment.id }}">
+                <td class="font_text">{{ appointment.id }}</td>
+                <td class="font_text">#{{ appointment.customer_id }} {{ appointment.customer.name }}</td>
+                <td class="font_text">#{{ appointment.stylist_id }} {{ appointment.stylist.name }}</td>
+                <td class="font_text">#{{ appointment.service_id }} {{ appointment.service.name }}</td>
+                <td class="font_text">#{{ appointment.workstation_id }} {{ appointment.workstation.workstation_type }}
+                </td>
+                <td class="font_text">{{ appointment.starts_at.strftime("%Y-%m-%d") }}<br>
+                    {{ appointment.starts_at.strftime("%H:%M") }}-{{ appointment.ends_at.strftime("%H:%M") }}</td>
+                <td class="font_text">{{ appointment.agreed_price_minor }}</td>
+                <td class="font_text" id="state_{{ appointment.id }}">{{ appointment.status }}</td>
+                <td class="font_text">
+                    {{ appointment.arrived_at.strftime("%H:%M") if appointment.arrived_at else '-' }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td class="font_text" colspan="14">No appointment record</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

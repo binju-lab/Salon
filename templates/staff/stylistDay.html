@@ -1,0 +1,34 @@
+{% extends "staff/baseStylist.html" %}
+
+<!--  Role D: Ruizhe Zheng 24107708 -->
+<!-- 员工端页面，展示当日日程 -->
+
+{% block stylist_service %}
+<div id="daily_schedule">
+    {% if scheduleDay %}
+    {% for appointment in scheduleDay %}
+    <div class="appointment-crad" data-id="{{appointment.id}}">
+        <p class="font_subtopic">service: {{ appointment.service.name }}</p>
+        <p class="font_text">customer: {{ appointment.customer.name }}</p>
+        <p class="font_text">stylist: {{ appointment.stylist.name }}</p>
+        <p class="font_text">price: {{ appointment.agreed_price_minor }}</p>
+        <p class="font_text">workstation type: {{ appointment.workstation.workstation_type }}</p>
+        <p class="font_text">workstion id: {{ appointment.workstation.id }}</dp>
+        <p class="font_text">start time: {{ appointment.starts_at.strftime("%Y-%m-%d %H:%M") }}</p>
+        <p class="font_text">end time: {{ appointment.ends_at.strftime("%Y-%m-%d %H:%M") }}</p>
+        <p class="font_text" id="state_{{appointment.id}}">state: {{ appointment.status }}</p>
+        <div class="buttons">
+            <button class="font_text" class="complete_btn" data-action="complete"
+                data-id="{{appointment.id}}">complete</button>
+            <button class="font_text" class="cancel_btn" data-action="cancel"
+                data-id="{{appointment.id}}">cancel</button>
+            <button class="font_text" class="no_show_btn" data-action="noshow" data-id="{{appointment.id}}">no
+                show</button>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>No schedule today</p>
+    {% endif %}
+</div>
+{% endblock %}

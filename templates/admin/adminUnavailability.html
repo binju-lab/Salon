@@ -1,0 +1,48 @@
+{% extends "admin/baseAdmin.html" %}
+
+<!--  Role D: Ruizhe Zheng 24107708 -->
+<!-- 管理：不可用页面 -->
+
+{% block admin_service %}
+<div class="admin_service">
+    <div class="admin_service_head">
+        <p class="font_subtopic">Current Unavailabilities:</p>
+        <button> add a unavailability </button>
+    </div>
+    <div class="table_outline" id="unavailability_table">
+        <table>
+            <thead>
+                <tr>
+                    <th class="font_text">id</th>
+                    <th class="font_text">stylist</th>
+                    <th class="font_text">starts at</th>
+                    <th class="font_text">ends at</th>
+                    <th class="font_text">reason</th>
+                    <th class="font_text">operation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in unavailabilities %}
+                <tr data-id="{{ item.id }}">
+                    <td class="font_text">{{ item.id }}</td>
+                    <td class="font_text">#{{ item.stylist_id }} {{ item.stylist.name }}</td>
+                    <td class="font_text">{{ item.starts_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                    <td class="font_text">{{ item.ends_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                    <td class="font_text">{{ item.reason }}</td>
+                    <td class="font_text">
+                        <div class="buttons">
+                            <button> edit </button>
+                            <button> delete </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td class="font_text" colspan="6">No unavailability record</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "admin/baseAdmin.html" %}
+
+<!--  Role D: Ruizhe Zheng 24107708 -->
+<!-- 管理：班次页面 -->
+
+{% block admin_service %}
+<div class="admin_service">
+    <div class="admin_service_head">
+        <p class="font_subtopic">Current Shifts:</p>
+        <button> add a shift </button>
+    </div>
+    <div id="working_shift_table">
+        <table>
+            <thead>
+                <tr>
+                    <th class="font_text">id</th>
+                    <th class="font_text">stylist</th>
+                    <th class="font_text">work date</th>
+                    <th class="font_text">time</th>
+                    <th class="font_text">operation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for shift in working_shifts %}
+                <tr data-id="{{ shift.id }}">
+                    <td class="font_text">{{ shift.id }}</td>
+                    <td class="font_text">#{{ shift.stylist_id }} {{ shift.stylist.name }}</td>
+                    <td class="font_text">{{ shift.work_date.strftime("%Y-%m-%d") }}</td>
+                    <td class="font_text">{{ shift.start_time.strftime("%H:%M") }}-{{ shift.end_time.strftime("%H:%M")
+                        }}</td>
+                    <td class="font_text">
+                        <div class="buttons">
+                            <button> edit </button>
+                            <button> delete </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td class="font_text" colspan="6">No working shift record</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

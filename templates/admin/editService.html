@@ -1,0 +1,48 @@
+{% extends "admin/baseAdmin.html" %}
+
+<!--  Role D: Ruizhe Zheng 24107708 -->
+<!-- 管理：编辑（修改，添加）服务页面 -->
+
+{% block admin_service %}
+<div class="admin_service">
+    <div class="admin_service_head">
+        <p class="font_subtopic">{{op}} a service:</p>
+    </div>
+    <div class="font_text" id="service_from">
+        <form action="{{ url_for('admin.submitService', op=op, id=form.id.data) }}" method="POST">
+            {{ form.hidden_tag() }}
+
+            <p><label for="id">id:</label><input type="text" value="{{ form.id.data or '' }}" readonly> </p>
+
+            <p>
+                {{ form.name.label }} {{ form.name() }}
+                {% for e in form.name.errors %}<span class="error">{{ e }}</span>{% endfor %}
+            </p>
+
+            <p>
+                {{ form.description.label }} {{ form.description() }}
+                {% for e in form.description.errors %}<span class="error">{{ e }}</span>{% endfor %}
+            </p>
+
+            <p>
+                {{ form.price_minor.label }} {{ form.price_minor() }}
+                {% for e in form.price_minor.errors %}<span class="error">{{ e }}</span>{% endfor %}
+            </p>
+
+            <p>
+                {{ form.duration_minutes.label }} {{ form.duration_minutes() }}
+                {% for e in form.duration_minutes.errors %}<span class="error">{{ e }}</span>{% endfor %}
+            </p>
+
+            <p>
+                {{ form.required_workstation_type.label }} {{ form.required_workstation_type() }}
+            </p>
+
+            {{ form.submit() }}
+            <button type="reset">reset</button>
+            <a href="{{ url_for('admin.services') }}" class="btn"> back </a>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
