@@ -38,7 +38,7 @@
     --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
 
     --container: 1080px;
-    --currency: "¥";
+    --currency: "$";
 }
 
 *,
@@ -151,6 +151,14 @@ body {
     gap: .5rem;
 }
 
+/* Header actions carry the same type size as the brand. Serif italics sit
+   optically low inside their line box, so the padding is trimmed at the top. */
+.site-header .btn--sm {
+    padding: .3rem .9rem .46rem;
+    font-size: 1.15rem;
+    line-height: 1.25;
+}
+
 .site-user {
     display: flex;
     align-items: center;
@@ -179,6 +187,20 @@ body {
 
 .container {
     padding: 2.5rem 0 4rem;
+}
+
+/* Pages that start with a back link sit closer to the header bar. */
+.container--tight {
+    padding-top: 1.1rem;
+}
+
+/* Sign in / create account: one centred card in the available height. */
+.container--center {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 0;
+    padding-bottom: 1.4rem;
 }
 
 .site-footer {
@@ -239,7 +261,7 @@ h3 {
 .lede {
     margin: .7rem 0 0;
     max-width: 60ch;
-    color: var(--muted);
+    color: var(--ink-soft);
 }
 
 .muted {
@@ -358,13 +380,13 @@ table.grid {
 
 .price::before {
     content: var(--currency);
-    margin-right: .12em;
+    margin-right: .04em;
     color: var(--muted);
     font-weight: 500;
 }
 
 .price--lg {
-    font: 600 1.5rem/1.2 var(--serif);
+    font: 600 1.6rem/1.2 var(--serif);
 }
 
 /* ----------------------------------------------------------------- buttons */
@@ -429,6 +451,13 @@ table.grid {
 .btn--sm {
     padding: .34rem .7rem;
     font-size: .85rem;
+}
+
+/* Landing page call to action: same visual weight as the heading. */
+.btn--hero {
+    padding: .72rem 1.6rem;
+    font-size: 1.05rem;
+    font-weight: 600;
 }
 
 .btn:disabled,
@@ -651,6 +680,47 @@ form.stack .field:last-of-type {
     grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
 }
 
+/* Services page: cards stack down the left column, leaving the right side clear
+   for a photo. */
+.services-layout {
+    display: grid;
+    gap: 2.4rem 4rem;
+    grid-template-columns: minmax(0, 6.5fr) minmax(0, 3.5fr);
+    align-items: stretch;
+}
+
+/* Cards stretch to the height of their photo: title on top, meta pinned low,
+   and the description centred in whatever space is left between them. */
+/* Let the body own the free space so the copy really centres between the title
+   and the meta row; the auto margin on meta would otherwise swallow it. */
+.services-layout .service-card__meta {
+    margin-top: 0;
+}
+
+/* Only the digits are red; the currency symbol keeps its muted colour. */
+.service-card .price {
+    color: var(--accent);
+}
+
+.service-card__body {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    padding-top: .6rem;
+}
+
+.service-photo {
+    margin: 0;
+}
+
+.service-photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
 .service-card {
     display: flex;
     flex-direction: column;
@@ -677,15 +747,15 @@ form.stack .field:last-of-type {
 }
 
 .service-card__name {
-    font: 600 1.15rem/1.25 var(--serif);
-    color: var(--ink);
+    font: 600 2rem/1.2 var(--serif);
+    color: #b8860b;
     text-decoration: none;
 }
 
 .service-card__desc {
     margin: 0;
-    color: var(--muted);
-    font-size: .92rem;
+    color: var(--ink-soft);
+    font-size: 1.1rem;
 }
 
 .service-card__meta {
@@ -694,8 +764,8 @@ form.stack .field:last-of-type {
     gap: .5rem;
     margin-top: auto;
     padding-top: .4rem;
-    color: var(--muted);
-    font-size: .85rem;
+    color: var(--ink-soft);
+    font-size: 1.2rem;
 }
 
 .dot-sep::before {
@@ -872,40 +942,94 @@ textarea:focus-visible,
 
 /* ------------------------------------------------------- public landing page */
 
-.hero-split {
+/* Two feature rows: copy on the left, photo on the right. Both rows share the
+   same column template, so the hours card lines up with the heading block. */
+.feature {
     display: grid;
     gap: 2.5rem;
-    grid-template-columns: minmax(0, 1.15fr) minmax(16rem, .85fr);
-    align-items: start;
-    padding: 0 0 1rem;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+    align-items: center;
 }
 
-/* Optically align the card with the cap height of the heading's first line. */
-.hero-split .hours-card {
-    margin-top: .55rem;
+.feature + .feature {
+    margin-top: 3.4rem;
 }
 
-.hero-split h1 {
+.feature__media {
+    margin: 0;
+}
+
+.feature__media img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+/* The timetable outranks the photo in this row: the columns flip so the card
+   gets the wide column and the photo is scaled down without cropping. The wider
+   gap is taken out of the card, so the photo keeps its size. */
+.feature--hours {
+    grid-template-columns: minmax(0, .78fr) minmax(0, 1fr);
+    gap: 4.5rem;
+}
+
+/* The left block is centred inside its own column, not on the page. */
+.hero-main {
+    text-align: center;
+}
+
+.hero-main .lede {
+    margin-inline: auto;
+}
+
+.hero-main .quick-links {
+    justify-content: center;
+}
+
+.hero-side {
+    text-align: center;
+}
+
+.hero-side .eyebrow {
+    margin: 0 0 .8rem;
+    font-size: 1rem;
+}
+
+/* Section label aligned with the card padding, so it lines up with the copy. */
+.section-title {
+    margin: 0 0 1.2rem;
+    padding-left: 1.25rem;
+    color: var(--accent);
+    font: 700 1.15rem/1.2 var(--sans);
+    letter-spacing: 0;
+}
+
+.feature h1 {
     margin: 0;
     font-size: clamp(2rem, 1.2rem + 2.6vw, 3.05rem);
     line-height: 1.08;
 }
 
-.hero-split .lede {
+.feature .lede {
     margin-top: 1rem;
-    font-size: 1.06rem;
+    font-size: 1.2rem;
+    line-height: 1.6;
 }
 
 .info-strip {
     display: flex;
     flex-wrap: wrap;
-    gap: .45rem 1.7rem;
-    margin: 1.9rem 0 0;
+    justify-content: center;
+    gap: .45rem 1.9rem;
+    margin: 1.7rem 0 0;
     padding: 1rem 0;
     border-top: 1px solid var(--line);
     border-bottom: 1px solid var(--line);
-    color: var(--muted);
-    font-size: .9rem;
+    color: var(--ink-soft);
+    font-size: 1.08rem;
+    font-weight: 500;
 }
 
 .info-strip__item {
@@ -923,7 +1047,7 @@ textarea:focus-visible,
 }
 
 .hours-card {
-    padding: 1.4rem 1.5rem;
+    padding: 2.7rem 2.2rem;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius);
@@ -931,22 +1055,22 @@ textarea:focus-visible,
 }
 
 .hours-card h2 {
-    margin: 0 0 .9rem;
-    font: 600 1.02rem/1.3 var(--sans);
+    margin: 0 0 1.1rem;
+    font: 600 1.4rem/1.3 var(--sans);
 }
 
 .hours-list {
     display: grid;
-    gap: .45rem;
+    gap: .7rem;
     margin: 0;
-    font-size: .94rem;
+    font-size: 1.25rem;
 }
 
 .hours-row {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    padding-bottom: .45rem;
+    padding-bottom: .65rem;
     border-bottom: 1px dashed var(--line);
 }
 
@@ -956,7 +1080,7 @@ textarea:focus-visible,
 }
 
 .hours-row dt {
-    color: var(--muted);
+    color: var(--ink-soft);
 }
 
 .hours-row dd {
@@ -1008,8 +1132,17 @@ textarea:focus-visible,
 
 .policy p {
     margin: 0;
-    color: var(--muted);
-    font-size: .9rem;
+    color: var(--ink-soft);
+    font-family: var(--serif);
+    font-size: 1.02rem;
+    font-style: italic;
+    line-height: 1.65;
+}
+
+/* Inline emphasis inside copy. */
+.hl {
+    color: var(--accent);
+    font-weight: 600;
 }
 
 .panel-grid {
@@ -1074,6 +1207,29 @@ textarea:focus-visible,
 
 .back-link:hover {
     color: var(--accent);
+}
+
+/* Clickable back link used at the top of a page. The small left margin lines
+   the arrow up with the optical edge of a large serif heading below it, and the
+   type size matches the header actions. */
+.back-link--accent {
+    margin: 0 0 .3rem .35rem;
+    color: var(--accent);
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.back-link--accent:hover {
+    text-decoration: underline;
+}
+
+/* Page intro that stands in for the heading: same size as the Opening hours
+   block on the landing page, and allowed to run the full container width. */
+.lede--services {
+    max-width: none;
+    margin-top: .55rem;
+    font-size: 1.4rem;
+    line-height: 1.35;
 }
 
 /* --------------------------------------------------------------- responsive */
@@ -1164,3 +1320,506 @@ textarea:focus-visible,
         margin-top: .6rem;
     }
 }
+
+/* ==========================================================================
+   TEMP EXPERIMENT — every piece of text in serif italic (option F everywhere).
+   Delete this whole block to go back to the normal type system.
+   ========================================================================== */
+body,
+h1, h2, h3, p, a, span, li, dt, dd, small, strong,
+label, button, input, select, textarea,
+.site-nav a,
+.brand,
+.btn,
+.badge,
+.eyebrow,
+.section-title,
+.price,
+.grid th,
+.grid td,
+.hours-card h2,
+.hours-row dt,
+.hours-row dd,
+.policy h3,
+.policy p,
+.service-card__name,
+.service-card__desc,
+.service-card__meta,
+.stylist-chip,
+.slot,
+.site-user__name,
+.site-user__name strong,
+.site-footer__inner,
+.alert,
+.empty,
+.error-page,
+.error-page__code,
+.back-link,
+.lede,
+.muted {
+    font-family: var(--serif) !important;
+    font-style: italic !important;
+}
+
+/* ==========================================================================
+   Page polish pass — carries the landing/services type scale to every other
+   page: back link, 2.35rem heading, 1.4rem intro, 1.15rem body, red prices.
+   ========================================================================== */
+
+/* Sub-page intro paragraph */
+.page-head .lede {
+    max-width: 68ch;
+    font-size: 1.4rem;
+    line-height: 1.45;
+}
+
+/* The services intro is meant to stay on one line. */
+.page-head .lede--services {
+    max-width: none;
+}
+
+/* Services page: share the leftover height across the gaps instead of leaving
+   it all under the second row. */
+.container--tight .page-head {
+    margin-bottom: 3rem;
+}
+
+.container--tight {
+    padding-bottom: 3.2rem;
+}
+
+.container--tight .services-layout {
+    row-gap: 3.4rem;
+}
+
+/* Service name on the detail page matches the gold card titles */
+.service-name {
+    color: #b8860b;
+}
+
+/* Summary cards: definition lists */
+.card .facts dt {
+    font-size: 1.05rem;
+}
+
+.card .facts dd {
+    font-size: 1.15rem;
+    font-weight: 500;
+}
+
+.card .facts .price {
+    color: var(--accent);
+    font-size: 1.6rem;
+}
+
+/* Forms */
+.field label,
+.field > .label {
+    font-size: 1.05rem;
+}
+
+.input,
+input[type="date"],
+input[type="time"],
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select,
+textarea {
+    padding: .65rem .8rem;
+    font-size: 1.05rem;
+}
+
+#booking-submit,
+form.stack > .btn--primary {
+    padding: .6rem 1.1rem;
+    font-size: 1.15rem;
+}
+
+/* Slot picker */
+.slot {
+    padding: .55rem .9rem;
+    font-size: 1.05rem;
+}
+
+.slot-note {
+    font-size: 1.05rem;
+}
+
+/* Alerts, empty states, chips */
+.alert {
+    font-size: 1.05rem;
+}
+
+.empty {
+    font-size: 1.1rem;
+}
+
+.stylist-chip {
+    font-size: 1.1rem;
+}
+
+/* Tables */
+.grid th {
+    font-size: .8rem;
+}
+
+.grid td {
+    font-size: 1.05rem;
+}
+
+.grid .btn--sm {
+    padding: .4rem .8rem;
+    font-size: 1rem;
+}
+
+/* Sign in / create account */
+.auth-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+}
+
+.auth-shell .back-link--accent {
+    align-self: flex-start;
+    margin-left: 0;
+}
+
+.auth-card {
+    align-self: center;
+}
+
+.auth-card h1 {
+    font-size: 2rem;
+}
+
+.auth-card .eyebrow {
+    font-size: .95rem;
+    letter-spacing: .1em;
+}
+
+.auth-card .muted {
+    color: var(--ink-soft);
+    font-size: 1.1rem;
+}
+
+.auth-card .btn {
+    padding: .7rem 1rem;
+    font-size: 1.1rem;
+}
+
+.auth-alt {
+    color: var(--ink-soft);
+    font-size: 1rem;
+}
+
+/* Error pages */
+.error-page h1 {
+    font-size: 2rem;
+}
+
+.error-page p {
+    color: var(--ink-soft);
+    font-size: 1.1rem;
+}
+
+.error-page__code {
+    font-size: .9rem;
+}
+/* Booking forms: the section heading sits above the slot picker. */
+.split h2 {
+    margin-bottom: 2rem;
+    font-size: 1.4rem;
+}
+/* ==========================================================================
+   TEMP — type annotations (size + colour) for every page.
+   Delete this whole block to remove every label. No markup depends on it.
+   ========================================================================== */
+
+.brand::after,
+.site-nav::after,
+.site-nav__guest .btn::after,
+.site-user .btn::after,
+.site-user__name::after,
+.hero-main h1::after,
+.hero-main .lede::after,
+.btn--hero::after,
+.info-strip::after,
+.hero-side .eyebrow::after,
+.hours-card h2::after,
+.hours-list::after,
+.section-title::after,
+.policy::after,
+.site-footer__inner::after,
+.back-link--accent::after,
+.page-head h1::after,
+.page-head .lede::after,
+.service-card::after,
+.auth-card h1::after,
+.auth-card .eyebrow::after,
+.auth-card .muted::after,
+.auth-card .btn::after,
+.auth-alt::after,
+.split > .card:not(form)::after,
+.stylist-list::after,
+.field::after,
+.slots::after,
+.slot-note::after,
+#booking-submit::after,
+.grid thead::after,
+.badge::after,
+.empty::after,
+.error-page h1::after,
+.error-page p::after {
+    /* Toggle: "none" hides every label, "block" shows them again. */
+    display: none;
+    position: absolute;
+    z-index: 90;
+    padding: .12rem .4rem;
+    border-radius: 4px;
+    background: #1c1917;
+    color: #fff;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: .62rem;
+    font-style: normal;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1.4;
+    text-transform: none;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.brand,
+.site-nav,
+.site-nav__guest .btn,
+.site-user .btn,
+.site-user__name,
+.hero-main h1,
+.hero-main .lede,
+.btn--hero,
+.info-strip,
+.hero-side .eyebrow,
+.hours-card h2,
+.hours-list,
+.section-title,
+.policy,
+.site-footer__inner,
+.back-link--accent,
+.page-head,
+.page-head h1,
+.page-head .lede,
+.service-card,
+.auth-card,
+.auth-card h1,
+.auth-card .eyebrow,
+.auth-card .muted,
+.auth-card .btn,
+.auth-alt,
+.split > .card:not(form),
+.stylist-list,
+.field,
+.slots,
+.slot-note,
+#booking-submit,
+.grid thead,
+.badge,
+.empty,
+.error-page h1,
+.error-page p {
+    position: relative;
+}
+
+/* ---- header -------------------------------------------------------------- */
+
+.brand::after,
+.site-nav::after,
+.site-nav__guest .btn::after,
+.site-user .btn::after,
+.site-user__name::after {
+    top: calc(100% + 5px);
+}
+
+.brand::after { content: "1.15rem  #1c1917"; left: 0; }
+.site-nav::after { content: "links 1.15rem  #44403c"; left: 0; }
+.site-nav__guest .btn--ghost::after { content: "1.15rem  #44403c"; left: 0; }
+.site-nav__guest .btn--primary::after { content: "1.15rem  #ffffff"; right: 0; }
+.site-user .btn::after { content: "1.15rem  #44403c"; right: 0; }
+
+.site-user__name::after {
+    content: "name .90rem  #1c1917\A role .82rem  #78716c";
+    white-space: pre;
+    right: 0;
+    top: calc(100% + 28px);
+}
+
+/* ---- shared page header --------------------------------------------------- */
+
+.back-link--accent::after {
+    content: "1.15rem  #9a3412";
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.page-head h1::after {
+    content: "2.35rem  #1c1917";
+    right: calc(100% + 14px);
+    top: .5rem;
+}
+
+.page-head h1.service-name::after {
+    content: "2.35rem  #b8860b";
+}
+
+.page-head .lede::after {
+    content: "1.40rem  #44403c";
+    right: calc(100% + 14px);
+    top: .4rem;
+}
+
+/* ---- landing page -------------------------------------------------------- */
+
+.hero-main h1::after,
+.hero-main .lede::after,
+.btn--hero::after,
+.section-title::after {
+    right: calc(100% + 14px);
+    top: .1rem;
+}
+
+.hero-main h1::after   { content: "3.05rem  #1c1917"; font-size: .66rem; }
+.hero-main .lede::after { content: "1.20rem  #44403c"; top: .55rem; }
+.btn--hero::after      { content: "1.05rem  #ffffff"; top: 50%; transform: translateY(-50%); }
+.section-title::after  { content: "1.15rem  #9a3412"; }
+
+.info-strip::after {
+    content: "1.08rem  #44403c";
+    left: 0;
+    top: calc(100% + 5px);
+}
+
+.policy::after {
+    content: "title .98rem  #1c1917\A body 1.02rem  #44403c";
+    white-space: pre;
+    left: 0;
+    bottom: calc(100% + 7px);
+    font-size: .58rem;
+}
+
+.hero-side .eyebrow::after,
+.hours-card h2::after,
+.hours-list::after {
+    left: calc(100% + 12px);
+}
+
+.hero-side .eyebrow::after { content: "1.00rem  #9a3412"; top: .15rem; }
+.hours-card h2::after      { content: "1.40rem  #1c1917"; top: .3rem; }
+.hours-list::after         { content: "1.25rem  #1c1917"; top: .35rem; }
+
+.site-footer__inner::after {
+    content: ".84rem  #78716c";
+    right: 0;
+    bottom: calc(100% + 6px);
+}
+
+/* ---- services page ------------------------------------------------------- */
+
+.service-card::after {
+    content: "name 2.00 #b8860b · price 1.60 #9a3412 · desc 1.10 #44403c · meta 1.20 #44403c · btn 1.20 #1c1917";
+    left: .4rem;
+    bottom: calc(100% + 5px);
+    font-size: .56rem;
+}
+
+/* ---- sign in / create account -------------------------------------------- */
+
+.auth-card h1::after,
+.auth-card .eyebrow::after,
+.auth-card .muted::after,
+.auth-card .btn::after,
+.auth-alt::after {
+    left: calc(100% + 10px);
+}
+
+.auth-card h1::after       { content: "2.00rem  #1c1917"; top: .2rem; }
+.auth-card .eyebrow::after { content: ".95rem  #9a3412"; top: .1rem; }
+.auth-card .muted::after   { content: "1.10rem  #44403c\A labels 1.05rem  #44403c"; white-space: pre; top: .1rem; }
+.auth-card .btn::after     { content: "1.10rem  #ffffff"; top: 50%; transform: translateY(-50%); }
+.auth-alt::after           { content: "1.00rem  #44403c"; top: .2rem; }
+
+/* ---- service detail / booking pages -------------------------------------- */
+
+.split > .card:not(form)::after {
+    content: "label 1.05rem #78716c · value 1.15rem #1c1917 · price 1.60rem #9a3412";
+    left: 0;
+    bottom: calc(100% + 6px);
+    font-size: .55rem;
+}
+
+.stylist-list::after {
+    content: "1.10rem  #1c1917";
+    left: 0;
+    bottom: calc(100% + 8px);
+}
+
+.field::after {
+    content: "label 1.05rem  #44403c\A input 1.05rem  #1c1917";
+    white-space: pre;
+    left: calc(100% + 10px);
+    top: 0;
+    font-size: .58rem;
+}
+
+.slot-note::after {
+    content: "1.05rem  #78716c";
+    left: calc(100% + 10px);
+    top: 0;
+}
+
+.slots::after {
+    content: "1.05rem  #1c1917";
+    left: calc(100% + 10px);
+    top: .2rem;
+}
+
+#booking-submit::after {
+    content: "1.15rem  #ffffff";
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* ---- my appointments ------------------------------------------------------ */
+
+.grid thead::after {
+    content: "th .80rem #78716c\A td 1.05rem #1c1917\A badge 1.00rem\A btn 1.00rem";
+    white-space: pre;
+    right: .6rem;
+    top: .15rem;
+    font-size: .5rem;
+}
+
+.badge::after {
+    content: "1.00rem";
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.empty::after {
+    content: "1.10rem  #78716c";
+    left: 0;
+    bottom: calc(100% + 6px);
+}
+
+/* ---- error pages ---------------------------------------------------------- */
+
+.error-page h1::after,
+.error-page p::after {
+    left: calc(100% + 10px);
+}
+
+.error-page h1::after { content: "2.00rem  #1c1917"; top: .3rem; }
+.error-page p::after  { content: "1.10rem  #44403c"; top: .2rem; }

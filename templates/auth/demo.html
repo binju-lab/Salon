@@ -3,48 +3,63 @@
 {% block content %}
 
 {# Opening hours are display copy. Change them here if the salon schedule changes. #}
-<p class="eyebrow">Appointments open</p>
-
-<section class="hero-split">
-    <div>
-        <h1>Book a haircut instantly!</h1>
+<section class="feature">
+    <div class="hero-main">
+        <h1>Book a haircut instantly !</h1>
         <p class="lede">
-            Pick a service, choose the stylist you like, and take the first time that suits you.
-            Your booking is confirmed the moment you submit it, and you can move or cancel it yourself.
+            You can pick any services or choose any stylists you like, and book the exact time just for you !
         </p>
+
+        <div class="quick-links">
+            <a class="btn btn--primary btn--hero" href="{{ url_for('customer.service_list') }}">Book an appointment NOW !</a>
+        </div>
 
         <div class="info-strip">
             <span class="info-strip__item">Confirmed instantly</span>
-            <span class="info-strip__item">Move the time yourself</span>
-            <span class="info-strip__item">Cancel up to 2 hours before</span>
+            <span class="info-strip__item">Select the preference yourself</span>
         </div>
     </div>
 
-    <aside class="hours-card">
-        <h2>Opening hours</h2>
-        <dl class="hours-list">
-            <div class="hours-row"><dt>Monday – Saturday</dt><dd>09:00 – 17:00</dd></div>
-            <div class="hours-row"><dt>Sunday</dt><dd>Closed</dd></div>
-        </dl>
-    </aside>
+    <figure class="feature__media">
+        <img src="{{ url_for('static', filename='img/salon-1.jpg') }}"
+             alt="A stylist trimming a customer's hair in the salon chair"
+             width="678" height="452" loading="eager">
+    </figure>
+</section>
+
+<section class="feature feature--hours">
+    <figure class="feature__media">
+        <img src="{{ url_for('static', filename='img/salon-2.jpg') }}"
+             alt="A stylist combing a customer's hair in front of the salon mirror"
+             width="900" height="600" loading="lazy">
+    </figure>
+
+    <div class="hero-side">
+        <p class="eyebrow">Appointments open</p>
+        <div class="hours-card">
+            <h2>Opening hours</h2>
+            <dl class="hours-list">
+                <div class="hours-row"><dt>Monday – Saturday</dt><dd>09:00 – 17:00</dd></div>
+                <div class="hours-row"><dt>Sunday</dt><dd>Closed</dd></div>
+            </dl>
+        </div>
+    </div>
 </section>
 
 <section class="section">
-    <div class="section__head">
-        <h2>Good to know</h2>
-    </div>
+    <h2 class="section-title">Good to know</h2>
     <div class="policy-grid">
         <div class="policy">
-            <h3>One booking, one chair</h3>
-            <p>Every appointment holds a stylist and a workstation for its whole length, so nothing gets double booked.</p>
+            <h3>Your booking is yours</h3>
+            <p>Your stylist and your chair are held for the whole appointment, so <span class="hl">nobody else</span> can take your slot.</p>
         </div>
         <div class="policy">
-            <h3>Change the time yourself</h3>
-            <p>Move an appointment to any free slot before it starts. The price and length stay exactly as booked.</p>
+            <h3>Plans changed ?</h3>
+            <p>Move your appointment to <span class="hl">any free time</span> before it starts. Same price, same length, no phone call !</p>
         </div>
         <div class="policy">
-            <h3>Cancelling</h3>
-            <p>Cancel up to two hours before the start and the slot goes straight back on sale. Closer than that, the button is disabled.</p>
+            <h3>Need to cancel ?</h3>
+            <p>Cancel up to <span class="hl">two hours</span> before the start and the slot goes back on sale straight away.</p>
         </div>
     </div>
 </section>

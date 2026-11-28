@@ -1,32 +1,48 @@
 {% extends "customer/layout.html" %}
 {% block title %}Services · Hair Salon{% endblock %}
+{% block main_class %}container--tight{% endblock %}
 
 {% block customer_content %}
 <div class="page-head">
-    <p class="eyebrow">Our menu</p>
+    <a class="back-link back-link--accent" href="{{ url_for('index') }}">&larr; Back to homepage</a>
     <h1>Services</h1>
-    <p class="lede">Pick a treatment to see how long it takes, what it costs and which stylists can perform it.</p>
+    <p class="lede lede--services">Pick a treatment to see <span class="hl">how long</span> it takes, what it <span class="hl">costs</span> and which <span class="hl">stylists</span> can perform it.</p>
 </div>
 
 {% if services %}
-<ul class="service-grid service-grid--fill" data-service-count="{{ services|length }}">
+{# One photo per service. Add a service by adding its <name>.jpg and a line here. #}
+{% set photo_for = {
+    'haircut': 'img/service-haircut.jpg',
+    'colouring': 'img/service-colouring.jpg'
+} %}
+<div class="services-layout" data-service-count="{{ services|length }}">
     {% for service in services %}
-    <li class="service-card" data-service-id="{{ service.id }}">
+    <article class="service-card" data-service-id="{{ service.id }}">
         <div class="service-card__head">
             <a class="service-card__name" href="{{ url_for('customer.service_detail', service_id=service.id) }}">{{ service.name }}</a>
             <span class="price price--lg">{{ service.price }}</span>
         </div>
-        <p class="service-card__desc">{{ service.description }}</p>
+        <div class="service-card__body">
+            <p class="service-card__desc">{{ service.description|highlight }}</p>
+        </div>
         <div class="service-card__meta">
-            <span>{{ service.duration_minutes }} min</span>
+            <span>At least {{ service.duration_minutes }} min</span>
             <span class="dot-sep" data-workstation-type="{{ service.required_workstation_type }}">
                 {{ 'Colouring station' if service.required_workstation_type == 'colour' else 'Standard chair' }}</span>
             <span class="spacer"></span>
             <a class="btn btn--sm" href="{{ url_for('customer.service_detail', service_id=service.id) }}">View</a>
         </div>
-    </li>
+    </article>
+
+    {% set photo = photo_for.get(service.name|lower) %}
+    <figure class="service-photo">
+        {% if photo %}
+        <img src="{{ url_for('static', filename=photo) }}"
+             alt="{{ service.name }} at Hair Salon" width="900" height="600" loading="lazy">
+        {% endif %}
+    </figure>
     {% endfor %}
-</ul>
+</div>
 {% else %}
 <div class="empty">No services are available at the moment.</div>
 {% endif %}

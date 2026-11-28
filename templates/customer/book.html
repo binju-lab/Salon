@@ -2,10 +2,9 @@
 {% block title %}Book {{ service.name }} · Hair Salon{% endblock %}
 
 {% block customer_content %}
-<a class="back-link" href="{{ url_for('customer.service_detail', service_id=service.id) }}">&larr; {{ service.name }}</a>
+<a class="back-link back-link--accent" href="{{ url_for('customer.service_detail', service_id=service.id) }}">&larr; {{ service.name }}</a>
 
 <div class="page-head">
-    <p class="eyebrow">Book an appointment</p>
     <h1>Pick a time</h1>
     <p class="lede">Choose a day, then pick one of the free start times. Nothing is reserved until you confirm.</p>
 </div>

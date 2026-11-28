@@ -124,14 +124,22 @@ def add_demo_data(password, work_date, now=None):
 
     haircut = Service(
         name="Haircut",
-        description="Standard cut and styling.",
+        description=(
+            "A consultation, a wash and a precision cut, finished with a blow-dry. "
+            "We shape the length and texture around **how your hair actually sits**, "
+            "so it still works on the days you do nothing to it."
+        ),
         price_minor=2500,
         duration_minutes=30,
         required_workstation_type="chair",
     )
     colouring = Service(
         name="Colouring",
-        description="Single-process colour treatment.",
+        description=(
+            "**Whatever look you have in mind** is what we mix. One shade all over, "
+            "a root refresh, or several tones blended through, the consultation "
+            "decides it and you agree the upkeep before we start."
+        ),
         price_minor=6000,
         duration_minutes=60,
         required_workstation_type="colour",

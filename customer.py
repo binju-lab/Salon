@@ -9,10 +9,12 @@ baseline files, and no availability or transaction logic is duplicated here:
 every write goes through ``booking.py``.
 """
 
+import re
 from datetime import datetime, timedelta
 
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_login import current_user
+from markupsafe import Markup, escape
 
 import booking
 from auth import roles_required
@@ -22,6 +24,21 @@ from money import price_from_minor
 from responses import json_error, wants_json
 
 customer = Blueprint("customer", __name__)
+
+_HIGHLIGHT = re.compile(r"\*\*(.+?)\*\*")
+
+
+@customer.app_template_filter("highlight")
+def highlight(text):
+    """Turn **a phrase** into the red emphasis span, escaping everything else.
+
+    The database stores plain text with markers, so nothing from the database is
+    ever rendered as raw HTML.
+    """
+    if not text:
+        return ""
+    escaped = str(escape(text))
+    return Markup(_HIGHLIGHT.sub(r'<span class="hl">\1</span>', escaped))
 
 # Team decision D2: a cancellation must be at least 2 hours before the start.
 CANCEL_WINDOW = timedelta(hours=2)
