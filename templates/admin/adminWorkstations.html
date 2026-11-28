@@ -1,0 +1,48 @@
+{% extends "admin/baseAdmin.html" %}
+
+<!--  Role D: Ruizhe Zheng 24107708 -->
+<!-- 管理：工位页面 -->
+
+{% block admin_service %}
+<div class="admin_service">
+    <div class="admin_service_head">
+        <p class="font_subtopic">Current Workstations:</p>
+        <button> add a workstation </button>
+    </div>
+    <div id="workstation_table">
+        <table>
+            <thead>
+                <tr>
+                    <th class="font_text">id</th>
+                    <th class="font_text">label</th>
+                    <th class="font_text">workstation type</th>
+                    <th class="font_text">is active</th>
+                    <th class="font_text">operation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for workstation in workstations %}
+                <tr data-id="{{ workstation.id }}">
+                    <td class="font_text">{{ workstation.id }}</td>
+                    <td class="font_text">{{ workstation.label }}</td>
+                    <td class="font_text">{{ workstation.workstation_type }}</td>
+                    <td class="font_text" id="active_{{ workstation.id }}">
+                        {{ 'active' if workstation.is_active else 'inactive' }}
+                    </td>
+                    <td class="font_text">
+                        <div class="buttons">
+                            <button> edit </button>
+                            <button> toggle </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td class="font_text" colspan="4">No workstation record</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

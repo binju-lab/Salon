@@ -1,0 +1,24 @@
+{% extends "staff/baseSA.html" %}
+
+<!--  Role D: Ruizhe Zheng 24107708 -->
+<!-- 
+管理端页面 
+链接跳转六张表格
+-->
+
+{% block nav %}
+<p>Navigation:</p>
+<a href="{{ url_for('admin.services') }}" class="font_link"> services </a>
+<a href="{{ url_for('admin.staff_services') }}" class="font_link"> staff_services </a>
+<a href="{{ url_for('admin.workstations') }}" class="font_link"> workstations </a>
+<a href="{{ url_for('admin.shifts') }}" class="font_link"> shifts </a>
+<a href="{{ url_for('admin.unavailability') }}" class="font_link"> unavailability </a>
+<a href="{{ url_for('admin.overview') }}" class="font_link"> Appointments-overview </a>
+{% endblock %}
+
+{% block main_service %}
+{% block admin_service %}
+<p>Admin main service content will be displayed here.</p>
+{% endblock %}
+{% endblock %}
+

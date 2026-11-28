@@ -1,0 +1,37 @@
+{% extends "admin/baseAdmin.html" %}
+
+<!--  Role D: Ruizhe Zheng 24107708 -->
+<!-- 管理：服务页面 -->
+
+{% block admin_service %}
+<div class="admin_service">
+    <div class="admin_service_head">
+        <p class="font_subtopic">Current Services:</p>
+        <a href="{{ url_for('admin.addService') }}" class="btn"> add a service </a>
+    </div>
+    <div id="service_list">
+        {% if services %}
+        {% for service in services %}
+        <div class="service-card" data-id="{{ service.id }}">
+            <p class="font_text">service: {{ service.name }}</p>
+            <p class="font_text">id: {{ service.id }}</p>
+            <p class="font_text">description: {{ service.description }}</p>
+            <p class="font_text">price: {{ service.price_minor }}</p>
+            <p class="font_text">duration: {{ service.duration_minutes }} minutes</p>
+            <p class="font_text">required workstation type: {{ service.required_workstation_type }}</p>
+            <p class="font_text" id="active_{{ service.id }}">status:
+                {% if service.is_active %}active{% else %}inactive{% endif %}</p>
+            <div class="buttons">
+                <a href="{{ url_for('admin.editService',id=service.id) }}" class="btn"> edit </a>
+                <button id="toggleService"> toggle </button>
+            </div>
+
+        </div>
+        {% endfor %}
+        {% else %}
+        <p>No service available</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

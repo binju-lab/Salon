@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+
+<!--  Role D: Ruizhe Zheng 24107708 -->
+<!-- 员工，管理网页框架 -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,
+    initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Hair Salon - {{ user.role }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Inter:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/frame.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/font.css')}}">
+    <script src="/static/js/stylistbtn.js" defer></script>
+</head>
+
+<body>
+    <header>
+        <h1 class="font_topic">{{ user.role }} {{ user.name }},Welcome to the {{ user.role }} page!</h1>
+    </header>
+    <nav>
+        {% block nav %}
+        {% endblock %}
+    </nav>
+    <main>
+        <section id="main_service">
+            <!-- 主要功能分区 -->
+            {% block main_service %}
+            {% endblock %}
+        </section>
+        <section id="main_info">
+            <!-- 当前角色个人信息 -->
+            <h2 class="font_subtopic">Personal Information</h2>
+            <p class="font_text">User ID: #{{user.id}}</p>
+            <p class="font_text">Name: {{user.name}}</p>
+            <p class="font_text">Role: {{user.role}}</p>
+        </section>
+    </main>
+    <!-- <aside>
+    </aside> -->
+    <footer>
+    </footer>
+</body>
+
+</html>

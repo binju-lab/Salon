@@ -1,0 +1,20 @@
+{% extends "staff/baseSA.html" %}
+
+<!--  Role D: Ruizhe Zheng 24107708 -->
+<!-- 
+员工端页面 
+发型师查看每日日程（顾客、服务、状态）；
+记录到店；
+标记已完成或未到 
+-->
+
+{% block nav %}
+<p>Navigation:</p>
+<a href="{{ url_for('staff.stylist_day') }}" class="font_link"> Daily Schedule </a>
+{% endblock %}
+
+{% block main_service %}
+{% block stylist_service %}
+<p>Stylist main service content will be displayed here.</p>
+{% endblock %}
+{% endblock %}
